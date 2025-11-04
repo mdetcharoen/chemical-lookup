@@ -1,1 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Chemical Lookup</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- CSV parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #0f172a;
+      --muted: #94a3b8;
+      --text: #e5e7eb;
+      --accent: #60a5fa;
+      --border: #1f2937;
+      --pill1: #3b82f6;
+      --pill2: #10b981;
+      --pill3: #f59e0b;
+      --pill4: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: linear-gradient(180deg, #0b1020, #0a0e1c 40%, #090d18);
+      color: var(--text);
+    }
+    .container { max-width: 1100px; margin: 0 auto; padding: 28px 18px 80px; }
+    h1 { margin: 0 0 6px; font-size: 26px; }
+    .sub { color: var(--muted); margin-bottom: 18px; font-size: 14px; }
+    .searchbar { position: relative; margin-bottom: 14px; }
+    .searchbar input {
+      width: 100%; padding: 14px 16px 14px 44px; border-radius: 14px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border); color: var(--text);
+      font-size: 16px; outline: none;
+    }
+    .searchbar input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(96,165,250,0.18); }
+    .icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; opacity: 0.7;
+    }
+    .results {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .list { max-height: 420px; overflow: auto; border-bottom: 1px solid var(--border); }
+    .row { padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; }
+    .row:hover { background: rgba(96,165,250,0.07); }
+    .line1 { font-weight: 700; font-size: 15px; }
+    .line2, .line3, .line4 { font-size: 13px; color: var(--muted); }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; color: #081018; margin-right: 6px; }
+    .pill.s1 { background: var(--pill1); }
+    .pill.s2 { background: var(--pill2); }
+    .pill.s3 { background: var(--pill3); }
+    .pill.s4 { background: var(--pill4); }
+    .detail { padding: 14px; min-height: 120px; }
+    .empty { color: var(--muted); }
+    .grouphead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .grid { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .tbl { width: 100%; border-collapse: collapse; }
+    .tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 10px; font-size: 13px; text-align: left; }
+    .tbl th { color: var(--muted); background: rgba(255,255,255,0.02); font-weight: 600; }
+    .muted { color: var(--muted); }
+    .meta { margin-top: 10px; color: var(--muted); font-size: 12px; display: flex; gap: 12px; flex-wrap: wrap; }
+    mark { background: transparent; color: var(--accent); font-weight: 700; }
+    .counter { color: var(--accent); font-weight: 600; }
+    .controls { display: flex; gap: 10px; align-items: center; margin: 8px 0 12px; }
+    .chip { font-size: 12px; color: var(--muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 999px; cursor: pointer; }
+    .chip.active { color: var(--text); border-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chemical lookup</h1>
+    <div class="sub">Type to search by Name, Other names, CAS number, or CAS number search, click a result to view all variants</div>
+
+    <div class="searchbar">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
+        <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+      </svg>
+      <input id="q" placeholder="Search by name, other names, CAS with or without hyphens" autocomplete="off" spellcheck="false"/>
+    </div>
+
+    <div class="controls">
+      <div class="chip" data-filter="Category">Category</div>
+      <div class="chip" data-filter="Storage">Storage</div>
+      <div class="chip" data-filter="Owner">Owner</div>
+      <div class="muted">Results, <span id="count" class="counter">0</span></div>
+    </div>
+
+    <div class="results">
+      <div id="list" class="list"></div>
+      <div id="detail" class="detail empty">No record selected</div>
+    </div>
+
+    <div class="meta">CSV, <code>data/chemical_list0801_20251104.csv</code>, grouped by Name + CAS number</div>
+  </div>
+
+  <script>
+    const CSV_PATH = "data/chemical_list0801_20251104.csv";
+
+    // Utility
+    const norm = s => (s ?? "").toString().trim();
+    const lower = s => norm(s).toLowerCase();
+    const dehyphen = s => lower(s).replace(/-/g, "");
+    const splitSyn = s => norm(s).split(/[;]+/).map(x => x.trim()).filter(Boolean);
+    const pluck = (o, k) => (o && o[k] != null ? String(o[k]) : "");
+
+    // Storage color class
+    function storageClass(storage) {
+      if (!storage) return "s1";
+      const t = storage.toLowerCase();
+      if (t.includes("storage 1")) return "s1";
+      if (t.includes("storage 2")) return "s2";
+      if (t.includes("storage 3")) return "s3";
+      if (t.includes("storage 4")) return "s4";
+      return "s1";
+    }
+
+    // Build group key, Name + CAS number
+    function groupKey(row) {
+      const name = lower(pluck(row, "Name"));
+      const cas = lower(pluck(row, "CAS number"));
+      return name + "||" + cas;
+    }
+
+    // Ranking score for combined search
+    function rankScore(q, group) {
+      const nq = lower(q);
+      const name = lower(group.name);
+      const syns = group.synonymsLower;
+      const cas = dehyphen(group.cas || "");
+      const fields = group.searchBlob;
+
+      // exact prefix on name
+      if (name.startsWith(nq)) return 1000 - name.length;
+      // exact prefix on any synonym token
+      if (syns.some(s => s.startsWith(nq))) return 900;
+      // exact match on cas search or cas
+      if (cas === nq) return 850;
+      // substring in name or synonyms
+      if (name.includes(nq)) return 700;
+      if (syns.some(s => s.includes(nq))) return 650;
+      // substring anywhere else
+      if (fields.includes(nq)) return 400;
+      return 0;
+    }
+
+    // Highlight helper
+    function highlight(text, q) {
+      const t = String(text ?? "");
+      const idx = t.toLowerCase().indexOf(q.toLowerCase());
+      if (q && idx >= 0) {
+        return t.substring(0, idx) + "<mark>" + t.substring(idx, idx + q.length) + "</mark>" + t.substring(idx + q.length);
+      }
+      return t;
+    }
+
+    // Roll up units, totals by unit
+    function totalsByUnit(variants, amountKey, unitKey) {
+      const agg = new Map();
+      for (const v of variants) {
+        const unit = pluck(v, unitKey);
+        const amt = parseFloat(pluck(v, amountKey));
+        if (!unit || isNaN(amt)) continue;
+        agg.set(unit, (agg.get(unit) || 0) + amt);
+      }
+      return Array.from(agg.entries()).map(([unit, total]) => ({ unit, total }));
+    }
+
+    // Render list row with four lines
+    function renderRow(group, q) {
+      const list = document.getElementById("list");
+      const row = document.createElement("div");
+      row.className = "row";
+      const storPills = Array.from(group.storageSet).slice(0, 4).map(s => `<span class="pill ${storageClass(s)}">${s}</span>`).join(" ");
+      const otherNames = group.synonyms.join("; ");
+
+      row.innerHTML = `
+        <div class="line1">${highlight(group.name, q)}</div>
+        <div class="line2">${q ? highlight(otherNames, q) : otherNames || "<span class='muted'>Other names not provided</span>"}</div>
+        <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
+        <div class="line4">${storPills || "<span class='muted'>Storage not provided</span>"} ${group.variants.length > 1 ? "<span class='muted'>&nbsp;· " + group.variants.length + " variants</span>" : ""}</div>
+      `;
+      row.addEventListener("click", () => showDetail(group, q));
+      list.appendChild(row);
+    }
+
+    // Detail view
+    function showDetail(group, q) {
+      const detail = document.getElementById("detail");
+      detail.classList.remove("empty");
+
+      const storPills = Array.from(group.storageSet).map(s => `<span class="pill ${storageClass(s)}">${s}</span>`).join(" ");
+      const catPills = Array.from(group.categorySet).map(c => `<span class="pill s2">${c}</span>`).join(" ");
+      const totals = totalsByUnit(group.variants, "Amount remain", "Amount remain unit")
+        .map(x => `${x.total} ${x.unit}`).join(", ");
+
+      const otherNames = group.synonyms.join("; ");
+
+      // Variants table columns in this order:
+      const headers = ["Grade","Manufacturer","Import date","Product Size","Product size unit","Amount remain","Amount remain unit","Check date","Owner","Storage","SDS"];
+
+      const rows = group.variants.map(v => `
+        <tr>
+          <td>${pluck(v,"Grade")}</td>
+          <td>${pluck(v,"Manufacturer")}</td>
+          <td>${pluck(v,"Import date")}</td>
+          <td>${pluck(v,"Product Size")}</td>
+          <td>${pluck(v,"Product size unit")}</td>
+          <td>${pluck(v,"Amount remain")}</td>
+          <td>${pluck(v,"Amount remain unit")}</td>
+          <td>${pluck(v,"Check date")}</td>
+          <td>${pluck(v,"Owner")}</td>
+          <td>${pluck(v,"Storage")}</td>
+          <td>${linkify(pluck(v,"SDS"))}</td>
+        </tr>
+      `).join("");
+
+      detail.innerHTML = `
+        <div class="grouphead">
+          <div>
+            <div class="line1">${highlight(group.name, q)}</div>
+            <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
+            <div class="badges">${storPills} ${catPills}</div>
+          </div>
+          <div class="muted">${group.variants.length} variant${group.variants.length>1?"s":""}</div>
+        </div>
+
+        <div class="line2" style="margin-bottom:8px">${otherNames ? "Other names, " + highlight(otherNames, q) : "<span class='muted'>Other names not provided</span>"}</div>
+
+        <div class="grid">
+          <table class="tbl">
+            <thead>
+              <tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+
+        <div class="meta">
+          ${totals ? "Total remaining, " + totals : ""}
+        </div>
+      `;
+      detail.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function linkify(url) {
+      const u = norm(url);
+      if (!u) return "<span class='muted'>not provided</span>";
+      const isPDF = /\.pdf(\?|#|$)/i.test(u);
+      return `<a href="${u}" target="_blank" rel="noopener">Open${isPDF ? " PDF" : ""}</a>`;
+    }
+
+    // Filtering by chips, optional and simple
+    let activeFilterKey = null;
+    function applyFilter(groups, q) {
+      if (!activeFilterKey) return groups;
+      const value = prompt(`Filter by ${activeFilterKey}. Enter text to match, empty to clear`);
+      if (value == null || value === "") {
+        activeFilterKey = null;
+        document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+        return groups;
+      }
+      const v = lower(value);
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      document.querySelector(`.chip[data-filter='${activeFilterKey}']`).classList.add("active");
+      return groups.filter(g => {
+        if (activeFilterKey === "Category") return Array.from(g.categorySet).some(x => lower(x).includes(v));
+        if (activeFilterKey === "Storage") return Array.from(g.storageSet).some(x => lower(x).includes(v));
+        if (activeFilterKey === "Owner") return Array.from(g.ownerSet).some(x => lower(x).includes(v));
+        return true;
+      });
+    }
+
+    document.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        activeFilterKey = chip.getAttribute("data-filter");
+        chip.classList.toggle("active");
+        render(); // re-render with filter prompt
+      });
+    });
+
+    // Data
+    let RAW = [];
+    let GROUPS = [];
+    let QUERY = "";
+
+    function buildGroups(rows) {
+      const map = new Map();
+      for (const r of rows) {
+        const k = groupKey(r);
+        if (!map.has(k)) {
+          map.set(k, {
+            key: k,
+            name: pluck(r, "Name"),
+            cas: pluck(r, "CAS number"),
+            variants: [],
+            synonyms: [],
+            synonymsLower: [],
+            storageSet: new Set(),
+            categorySet: new Set(),
+            ownerSet: new Set(),
+            searchBlob: ""
+          });
+        }
+        map.get(k).variants.push(r);
+      }
+      // enrich
+      for (const g of map.values()) {
+        const syn = new Set();
+        const stor = new Set();
+        const cat = new Set();
+        const own = new Set();
+        let blob = [
+          g.name, g.cas
+        ].join(" ");
+
+        for (const v of g.variants) {
+          splitSyn(pluck(v, "Other names")).forEach(s => syn.add(s));
+          const st = pluck(v, "Storage"); if (st) stor.add(st);
+          const ca = pluck(v, "Category"); if (ca) cat.add(ca);
+          const ow = pluck(v, "Owner"); if (ow) own.add(ow);
+
+          blob += " " + [
+            pluck(v, "CAS number search"),
+            pluck(v, "Manufacturer"),
+            pluck(v, "Category"),
+          ].join(" ");
+        }
+
+        g.synonyms = Array.from(syn).sort((a,b)=>a.localeCompare(b));
+        g.synonymsLower = g.synonyms.map(s => s.toLowerCase());
+        g.storageSet = stor;
+        g.categorySet = cat;
+        g.ownerSet = own;
+        g.searchBlob = lower(blob) + " " + dehyphen(g.cas || "");
+      }
+      // sort by Name, then CAS
+      return Array.from(map.values()).sort((a,b) => {
+        const n = a.name.localeCompare(b.name);
+        return n !== 0 ? n : (a.cas || "").localeCompare(b.cas || "");
+      });
+    }
+
+    function searchGroups(groups, q) {
+      if (!q) return groups;
+      const nq = lower(q).trim();
+      const withScores = groups.map(g => ({ g, s: rankScore(nq, g) }))
+        .filter(x => x.s > 0)
+        .sort((a,b) => b.s - a.s || a.g.name.localeCompare(b.g.name));
+      return withScores.map(x => x.g);
+    }
+
+    function render() {
+      const list = document.getElementById("list");
+      const detail = document.getElementById("detail");
+      list.innerHTML = "";
+      if (!GROUPS.length) {
+        document.getElementById("count").textContent = "0";
+        detail.classList.add("empty");
+        detail.textContent = "No record selected";
+        return;
+      }
+
+      const filtered = applyFilter(searchGroups(GROUPS, QUERY), QUERY);
+      const capped = filtered.slice(0, 500);
+      document.getElementById("count").textContent = String(filtered.length);
+
+      for (const g of capped) renderRow(g, QUERY);
+      if (capped.length) showDetail(capped[0], QUERY);
+    }
+
+    document.getElementById("q").addEventListener("input", e => {
+      QUERY = e.target.value || "";
+      render();
+    });
+
+    // Load CSV, build groups, render
+    Papa.parse(CSV_PATH, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: results => {
+        RAW = results.data.map(r => {
+          // normalize known headers, keep raw values
+          return {
+            "Name": pluck(r,"Name"),
+            "Other names": pluck(r,"Other names"),
+            "CAS number": pluck(r,"CAS number"),
+            "CAS number search": dehyphen(pluck(r,"CAS number search")),
+            "Grade": pluck(r,"Grade"),
+            "Manufacturer": pluck(r,"Manufacturer"),
+            "Import date": pluck(r,"Import date"),
+            "Product Size": pluck(r,"Product Size"),
+            "Product size unit": pluck(r,"Product size unit"),
+            "Amount remain": pluck(r,"Amount remain"),
+            "Amount remain unit": pluck(r,"Amount remain unit"),
+            "Check date": pluck(r,"Check date"),
+            "Owner": pluck(r,"Owner"),
+            "Category": pluck(r,"Category"),
+            "Storage": pluck(r,"Storage"),
+            "SDS": pluck(r,"SDS")
+          };
+        });
+        GROUPS = buildGroups(RAW);
+        render();
+      },
+      error: err => {
+        const detail = document.getElementById("detail");
+        detail.classList.remove("empty");
+        detail.innerHTML = `<span class="muted">Failed to load CSV, ${String(err)}</span>`;
+      }
+    });
+  </script>
+</body>
+</html>
 
