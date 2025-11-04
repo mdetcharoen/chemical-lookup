@@ -85,7 +85,28 @@
     .empty { color: var(--muted); }
     .grouphead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     .badges { display: flex; gap: 8px; flex-wrap: wrap; }
-    .grid { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    .grid {border: 1px solid var(--border);  border-radius: 12px; }
+    .table-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;   /* enables swipe scroll on iOS */
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+}
+
+.tbl {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;                     /* ensures horizontal scroll on small screens */
+}
+
+.tbl th,
+.tbl td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  font-size: 13px;
+  text-align: left;
+}
     .tbl { width: 100%; border-collapse: collapse; }
     .tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 10px; font-size: 13px; text-align: left; }
     .tbl th { color: var(--muted); background: rgba(255,255,255,0.02); font-weight: 600; }
@@ -260,12 +281,14 @@
         <div class="line2" style="margin-bottom:8px">${otherNames ? "Other names, " + highlight(otherNames, q) : "<span class='muted'>Other names not provided</span>"}</div>
 
         <div class="grid">
+         <div class="table-scroll">
           <table class="tbl">
             <thead>
               <tr>${headers.map(h => `<th>${h}</th>`).join("")}</tr>
             </thead>
             <tbody>${rows}</tbody>
           </table>
+         </div>
         </div>
 
         <div class="meta">
