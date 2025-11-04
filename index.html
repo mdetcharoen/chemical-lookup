@@ -92,6 +92,24 @@
   -webkit-overflow-scrolling: touch;   /* enables swipe scroll on iOS */
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  scrollbar-color: #60a5fa #0b1020;  /* accent + dark background for Firefox */
+  scrollbar-width: thin;              /* Firefox */
+}
+
+/* WebKit browsers (Chrome, Edge, Safari) */
+.table-scroll::-webkit-scrollbar {
+  height: 8px;                        /* thickness of horizontal bar */
+}
+.table-scroll::-webkit-scrollbar-track {
+  background: #0b1020;                /* track background */
+  border-radius: 10px;
+}
+.table-scroll::-webkit-scrollbar-thumb {
+  background: #60a5fa;                /* thumb color */
+  border-radius: 10px;
+}
+.table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #93c5fd;                /* lighter on hover */
 }
 
 .tbl {
