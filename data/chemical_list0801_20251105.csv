@@ -1,0 +1,56 @@
+Name,Other names,CAS number,CAS number search,Grade,Manufacturer,Import date,Product Size,Product size unit,Amount remain,Amount remain unit,Check date,Owner,Category,Storage,SDS
+Acetone,,67-64-1,67641,AR,Merck,,2.5,L,1,L,2025-11-03,Central Stock,Flammable,Chemical storage 3,
+Boric acid,,10043-35-3,10043353,ACS,Amresco,,1,kg,0.5,kg,2025-11-03,Central Stock,Acid,Chemical storage 1,docs/boric-b7660.pdf
+Boric acid,,10043-35-3,10043353,,Rankem,,1,kg,0.5,kg,2025-11-03,Central Stock,Acid,Chemical storage 1,
+Chelex 100 Resin,,,,Biotechnology,Bio-Rad,,100,g,40,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/chelex-HRLS00149_MTR_EGHS_BE.pdf
+Chloroform,,67-66-3,67663,AR,RCI Labscan,2020-06-25,2.5,L,2,L,2025-11-03,Krittika Kaewchumnong,Flammable,Chemical storage 3,
+D-(+)-Glucose,Dextrose,50-99-7,50997,Molecular biology,Sigma,2011-12-26,100,g,50,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/glucose-g8270.pdf
+EDTA,,60-00-4,60004,AR,Ajax,,500,g,400,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,
+EDTA Disodium Salt Dihydrate,,6381-92-6,6381926,Biotechnology,Amresco,2015-11-26,500,g,200,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/edta-sds_VWRV0105.pdf
+Ethanol absolute,,64-17-5,64175,AR,Merck,,2.5,L,2.5,L,2025-11-03,Central Stock,Flammable,Chemical storage 3,docs/ethanol_1.00983.pdf
+Glycerol,,56-81-5,56815,Biotechnology,Amresco,2015-03-03,1,L,1,L,2025-11-03,Central Stock,Neutral,Chemical storage 1,
+Glycine,,56-40-6,56406,Molecular biology,Himedia,2023-02-01,500,g,500,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/glycine-MB013.pdf
+Igepal CA-630,,9002-93-1,9002931,Molecular biology,Merck,2023-01-01,50,mL,50,mL,2025-11-03,Matsapume Detcharoen,Detergent/Organic,Chemical storage 1,docs/igepal-i8896.pdf
+Isoamyl-alcohol,,123-51-3,123513,AR,QReC,2020-06-25,2.5,L,2,L,2025-11-03,Krittika Kaewchumnong,Flammable,Chemical storage 3,
+Isopropanol,,67-63-0,67630,AR,Merck,,2.5,L,2,L,2025-11-03,Central Stock,Flammable,Chemical storage 3,docs/isopropanol_109634.pdf
+Isopropanol,,67-63-0,67630,AR,Glentham,2025-01-01,2.5,L,2.5,L,2025-11-03,Central Stock,Flammable,Chemical storage 3,
+Isopropanol,,67-63-0,67630,AR,RCI Labscan,,2.5,L,2,L,2025-11-03,Central Stock,Flammable,Chemical storage 3,
+LB Broth Miller,,,,,Formedium,,500,g,400,g,2025-11-03,Matsapume Detcharoen,Neutral,Chemical storage 1,
+Methyl-4-hydroxybenzoate,Nipagin;Methyl paraben,99-76-3,99763,,Sigma,2025-01-01,500,g,500,g,2025-11-03,Matsapume Detcharoen,Neutral,Chemical storage 1,docs/nipagin-h5501.pdf
+"N,N,N',N'-Tetramethylethylenediamine",TEMED,110-18-9,110189,,TCI,2025-01-01,100,mL,100,mL,2025-11-03,Central Stock,Flammable,Chemical storage 3,docs/tmed-T0147_JP_EN.pdf
+"N-Cetyl-N,N,N Trimethyl Ammonium Bromide",CTAB,57-09-0,57090,,Biobasic,,100,g,100,g,2025-11-03,Matsapume Detcharoen,Neutral,Chemical storage 1,docs/ctab-h6269.pdf
+"N-Cetyl-N,N,N Trimethyl Ammonium Bromide",CTAB,57-09-0,57090,AR,Loba Chemie,2022-01-30,100,g,100,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/ctab-h6269.pdf
+Phosphate-buffered saline 10x,PBS,,,,Himedia,,500,mL,500,mL,2025-11-03,Matsapume Detcharoen,Neutral,Chemical storage 1,docs/pbs-ML023.pdf
+p-Hydroxybenzoic acid,,99-96-7,99967,,Himedia,2023-10-05,500,g,500,g,2025-11-03,Central Stock,Acid,Chemical storage 1,
+Polyvinylpyrrolidone,,9003-39-8,9003398,Molecular biology,Sigma,2011-09-09,50,g,25,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/pvp40.pdf
+Potassium acetate,,127-08-2,127082,AR,Ajax,,500,g,400,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/KAC-getpdf.ashx.pdf
+Potassium acetate,,127-08-2,127082,Molecular biology,Sigma,2011-12-20,100,g,0,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/KAc-p1190.pdf
+Potassium chloride,,7447-40-7,7447407,AR,Ajax,2016-11-17,1,kg,1,kg,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/KCl-getpdf.ashx.pdf
+Propionic acid,,79-09-4,79094,AR,J.T.Baker,,500,mL,300,mL,2025-11-03,Central Stock,Acid,Chemical storage 1,
+Silver nitrate,,7761-88-8,7761888,,POCH,,40,g,20,g,2025-11-03,Central Stock,Oxidizer,Chemical storage 4,
+SOC broth,,,,,Formedium,,250,g,200,g,2025-11-03,Matsapume Detcharoen,Neutral,Chemical storage 1,
+Sodium acetate,,127-09-3,127093,AR,Ajax,2016-11-20,500,g,400,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/NaAc-s2889.pdf
+Sodium carbonate,,497-19-8,497198,AR,Merck,,1,kg,0.4,kg,2025-11-03,Central Stock,Base,Chemical storage 2,docs/sodiumcarbonate_223530.pdf
+Sodium carbonate,,497-19-8,497198,AR,Merck,,1,kg,1,kg,2025-11-03,Central Stock,Base,Chemical storage 2,docs/sodiumcarbonate_223530.pdf
+Sodium chloride,,7647-14-5,7647145,Biotechnology,Amresco,2015-11-26,1,kg,0.7,kg,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/nacl-sds_VWRV0241.pdf
+Sodium chloride,,7647-14-5,7647145,,Amresco,,1,kg,0.7,kg,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/nacl-sds_VWRV0241.pdf
+Sodium Dodecyl Sulfate,SDS,151-21-3,151213,Biotechnology,Amresco,2015-12-04,100,g,60,g,2025-11-03,Central Stock,Detergent/Organic,Chemical storage 1,docs/sds_VWRV0227.pdf
+Sodium Dodecyl Sulfate,SDS,151-21-3,151213,Biotechnology,Amresco,,100,g,100,g,2025-11-03,Central Stock,Detergent/Organic,Chemical storage 1,
+Sodium hydroxide,,497-19-8,497198,AR,Ajax,2013-01-01,1,kg,1,kg,2025-11-03,Central Stock,Base,Chemical storage 2,
+Sodium hydroxide,,497-19-8,497198,AR,Fisher Scientific,,1,kg,0.5,kg,2025-11-03,Central Stock,Base,Chemical storage 2,docs/NaOH-NZ-000041_ASNZ_ANZ_EN.pdf
+Sodium hydroxide,,1310-73-2,1310732,AR,Fisher Scientific,2016-05-02,1,kg,1,kg,2025-11-03,Central Stock,Base,Chemical storage 2,docs/NaOH-NZ-000041_ASNZ_ANZ_EN.pdf
+Sodium hydroxide,,1310-73-3,1310733,AR,Merck,,1,kg,0.5,kg,2025-11-03,Central Stock,Base,Chemical storage 2,docs/NaOH-1.06498.pdf
+Sorbitol,,50-70-4,50704,,Merck,,1,kg,1,kg,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/sorbitol-56755-m.pdf
+Sucrose,,57-50-1,57501,Molecular biology,Sigma,2011-12-20,500,g,200,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/sucrose-ghs_0335.pdf
+Sucrose,,57-50-1,57501,,Amresco,2015-11-26,1,kg,0.5,kg,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/sucrose-s0389.pdf
+Tris-Borate-EDTA,TBE,,,,VWR,,40,L,20,L,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/TBE-ghs_0478.pdf
+Tetracycline HCl,,64-75-5,64755,,Merck,,25,g,25,g,2025-11-03,Central Stock,Neutral,Chemical storage 1,docs/tetracyclin-58346-m.pdf
+Tris,,77-86-1,77861,Biotechnology,Amresco,2015-11-26,500,g,50,g,2025-11-03,Central Stock,Base,Chemical storage 2,docs/sds-25614810.pdf
+Tris,,,,Molecular biology,Vivantis,,1,kg,0.1,kg,2025-11-03,Central Stock,Base,Chemical storage 2,
+Tris hydrochloride,,1185-53-1,1185531,Proteomics,VWR,,500,g,500,g,2025-11-03,Central Stock,Neutral,Chemical storage 2,
+Triton X-100,,9002-93-1,9002931,Molecular biology,Himedia,2022-12-30,100,mL,100,mL,2025-11-03,Matsapume Detcharoen,Detergent/Organic,Chemical storage 1,docs/tritonx100-MB031.pdf
+Tween 20,,9005-64-5,9005645,Molecular biology,Himedia,2022-12-30,100,mL,100,mL,2025-11-03,Matsapume Detcharoen,Detergent/Organic,Chemical storage 1,docs/tween20-MB067.pdf
+Ethanol absolute,,64-17-5,64176,AR,Merck,,2.5,L,2,L,2025-11-05,Patamarerk Engsontia,Flammable,Chemical storage 3,docs/ethanol_1.00983.pdf
+Ethanol absolute,,64-17-5,64177,AR,Merck,,2.5,L,0.5,L,2025-11-05,Central Stock,Flammable,Chemical storage 3,docs/ethanol_1.00983.pdf
+Isoamyl-alcohol,,123-51-3,123513,AR,Unilab,,2.25,L,1,L,2025-11-05,Central Stock,Flammable,Chemical storage 3,
+Isoamyl-alcohol,,123-51-3,123513,AR,Unilab,,2.25,L,1,L,2025-11-05,Central Stock,Flammable,Chemical storage 3,
