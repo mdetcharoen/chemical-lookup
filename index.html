@@ -173,7 +173,10 @@
     const lower = s => norm(s).toLowerCase();
     const dehyphen = s => lower(s).replace(/-/g, "");
     const splitSyn = s => norm(s).split(/[;]+/).map(x => x.trim()).filter(Boolean);
-    const pluck = (o, k) => (o && o[k] != null ? String(o[k]) : "");
+    const pluck = (o, k) => {
+  if (!o || !(k in o) || o[k] == null) return "";
+  return String(o[k]).trim();
+};
 
     // Storage color class
     function storageClass(storage) {
@@ -452,6 +455,8 @@
       download: true,
       header: true,
       skipEmptyLines: true,
+      delimitersToGuess: [",", "\t", ";", "|"],
+      transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
       complete: results => {
         RAW = results.data.map(r => {
           // normalize known headers, keep raw values
