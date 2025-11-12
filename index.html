@@ -25,6 +25,12 @@
       --pill6: #22d3ee;  /* cyan   */
       --pill7: #60a5fa;  /* light blue */
       --pill8: #f472b6;  /* pink   */
+      /* Storage colors */
+      --storage1: #22d3ee;      /* Chemical storage 1, cyan */
+      --storage2: #34d399;      /* Chemical storage 2, green */
+      --storage3: #f59e0b;      /* Chemical storage 3, amber */
+      --ownershelf: #a78bfa;    /* Owner's shelf, violet */
+      --refrigerator: #60a5fa;  /* Refrigerator, light blue */
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -180,12 +186,22 @@ a:hover, a:focus {
 
   <script>
     const CSV_PATH = "data/chemical_list0801_20251112.csv";
-    const storageColors = {
-  "Chemical storage 1": "var(--pill1)",
-  "Chemical storage 2": "var(--pill2)",
-  "Chemical storage 3": "var(--pill3)",
-  "Owner's shelf": "var(--pill5)",
-  "Refrigerator": "var(--pill6)"
+const storageColors = {
+  "Chemical storage 1": "var(--storage1)",
+  "Chemical storage 2": "var(--storage2)",
+  "Chemical storage 3": "var(--storage3)",
+  "Owner's shelf": "var(--ownershelf)",
+  "Refrigerator": "var(--refrigerator)"
+};
+
+// Category colors, per your request
+const categoryColors = {
+  "Acid": "#ef4444",          // red
+  "Base": "#f59e0b",          // orange
+  "Neutral": "#10b981",       // green
+  "Flammable": "#f59e0b",
+  "Oxidizer": "#f472b6",
+  "Detergent/Organic": "#60a5fa"
 };
 
     // Utility
@@ -198,16 +214,7 @@ a:hover, a:focus {
   return String(o[k]).trim();
 };
 
-    // Storage color class
-    function storageClass(storage) {
-      if (!storage) return "s1";
-      const t = storage.toLowerCase();
-      if (t.includes("storage 1")) return "s1";
-      if (t.includes("storage 2")) return "s2";
-      if (t.includes("storage 3")) return "s3";
-      if (t.includes("storage 4")) return "s4";
-      return "s1";
-    }
+
 
     // Build group key, Name + CAS number
     function groupKey(row) {
@@ -289,8 +296,20 @@ a:hover, a:focus {
       const detail = document.getElementById("detail");
       detail.classList.remove("empty");
 
-      const storPills = Array.from(group.storageSet).map(s => `<span class="pill ${storageClass(s)}">${s}</span>`).join(" ");
-      const catPills = Array.from(group.categorySet).map(c => `<span class="pill s2">${c}</span>`).join(" ");
+      const storPills = Array.from(group.storageSet)
+  .map(storage => {
+    const color = storageColors[storage] || "var(--accent)";
+    return `<span class="pill" style="background:${color}">${storage}</span>`;
+  })
+  .join(" ");
+
+      const catPills = Array.from(group.categorySet)
+  .map(cat => {
+    const color = categoryColors[cat] || "var(--pill2)"; // default green if unknown
+    return `<span class="pill" style="background:${color}">${cat}</span>`;
+  })
+  .join(" ");
+
       const totals = totalsByUnit(group.variants, "Amount remain", "Amount remain unit")
         .map(x => `${x.total} ${x.unit}`).join(", ");
 
