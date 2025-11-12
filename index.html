@@ -180,6 +180,13 @@ a:hover, a:focus {
 
   <script>
     const CSV_PATH = "data/chemical_list0801_20251112.csv";
+    const storageColors = {
+  "Chemical storage 1": "var(--pill1)",
+  "Chemical storage 2": "var(--pill2)",
+  "Chemical storage 3": "var(--pill3)",
+  "Owner's shelf": "var(--pill5)",
+  "Refrigerator": "var(--pill6)"
+};
 
     // Utility
     const norm = s => (s ?? "").toString().trim();
@@ -258,7 +265,13 @@ a:hover, a:focus {
       const list = document.getElementById("list");
       const row = document.createElement("div");
       row.className = "row";
-      const storPills = Array.from(group.storageSet).slice(0, 4).map(s => `<span class="pill ${storageClass(s)}">${s}</span>`).join(" ");
+      const storPills = Array.from(group.storageSet)
+  .slice(0, 4)
+  .map(storage => {
+    const color = storageColors[storage] || "var(--accent)";
+    return `<span class="pill" style="background:${color}">${storage}</span>`;
+  })
+  .join(" ");
       const otherNames = group.synonyms.join("; ");
 
       row.innerHTML = `
