@@ -548,47 +548,47 @@ const categoryColors = {
     });
 
     // Load CSV, build groups, render
-    Papa.parse(CSV_PATH, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      delimitersToGuess: [",", "\t", ";", "|"],
-      transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
-      complete: results => {
-          RAW = results.data.map(r => ({
-            "Number": pluck(r,"Number"),
-            "Name": pluck(r,"Name"),
-            "Other names": pluck(r,"Other names"),
-            "CAS number": pluck(r,"CAS number"),
-            "CAS number search": dehyphen(pluck(r,"CAS number search")),
-            "Grade": pluck(r,"Grade"),
-            "Manufacturer": pluck(r,"Manufacturer"),
-            "Open date": pluck(r,"Open date"),
-            "Product Size": pluck(r,"Product Size"),
-            "Product size unit": pluck(r,"Product size unit"),
-            "Amount remain": pluck(r,"Amount remain"),
-            "Amount remain unit": pluck(r,"Amount remain unit"),
-            "Check date": pluck(r,"Check date"),
-            "Owner": pluck(r,"Owner"),
-            "Category": pluck(r,"Category"),
-            "Storage": pluck(r,"Storage"),
-            "SDS": pluck(r,"SDS"),
-            "SDS version": pluck(r,"SDS version"),
-            "GHS: Signal Word": pluck(r,"GHS: Signal Word"),
-            "Receive Date": pluck(r,"Receive Date"),
-            "Expire Date": pluck(r,"Expire Date"),
-            "Price": pluck(r,"Price")
-          }));
-        });
-        GROUPS = buildGroups(RAW);
-        render();
-      },
-      error: err => {
-        const detail = document.getElementById("detail");
-        detail.classList.remove("empty");
-        detail.innerHTML = `<span class="muted">Failed to load CSV, ${String(err)}</span>`;
-      }
-    });
+Papa.parse(CSV_PATH, {
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  delimitersToGuess: [",", "\t", ";", "|"],
+  transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
+  complete: results => {
+    RAW = results.data.map(r => ({
+      "Number": pluck(r,"Number"),
+      "Name": pluck(r,"Name"),
+      "Other names": pluck(r,"Other names"),
+      "CAS number": pluck(r,"CAS number"),
+      "CAS number search": dehyphen(pluck(r,"CAS number search")),
+      "Grade": pluck(r,"Grade"),
+      "Manufacturer": pluck(r,"Manufacturer"),
+      "Open date": pluck(r,"Open date"),
+      "Product Size": pluck(r,"Product Size"),
+      "Product size unit": pluck(r,"Product size unit"),
+      "Amount remain": pluck(r,"Amount remain"),
+      "Amount remain unit": pluck(r,"Amount remain unit"),
+      "Check date": pluck(r,"Check date"),
+      "Owner": pluck(r,"Owner"),
+      "Category": pluck(r,"Category"),
+      "Storage": pluck(r,"Storage"),
+      "SDS": pluck(r,"SDS"),
+      "SDS version": pluck(r,"SDS version"),
+      "GHS: Signal Word": pluck(r,"GHS: Signal Word"),
+      "Receive Date": pluck(r,"Receive Date"),
+      "Expire Date": pluck(r,"Expire Date"),
+      "Price": pluck(r,"Price")
+    }));
+
+    GROUPS = buildGroups(RAW);
+    render();
+  },
+  error: err => {
+    const detail = document.getElementById("detail");
+    detail.classList.remove("empty");
+    detail.innerHTML = `<span class="muted">Failed to load CSV, ${String(err)}</span>`;
+  }
+});
   </script>
 </body>
 </html>
