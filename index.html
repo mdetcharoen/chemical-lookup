@@ -30,7 +30,12 @@
       --storage2: #34d399;  
       --storage3: #f59e0b;  
       --ownershelf: #a78bfa; 
-      --refrigerator: #60a5fa; 
+      --refrigerator: #60a5fa;
+      /* GHS signal word colors */
+      --ghs-danger: #ef4444;     /* red */
+      --ghs-warning: #f59e0b;    /* orange */
+      --ghs-na: #64748b;         /* muted slate */
+
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
@@ -68,6 +73,8 @@
     .pill.s2 { background: var(--pill2); }
     .pill.s3 { background: var(--pill3); }
     .pill.s4 { background: var(--pill4); }
+    .badge {display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:600; color:#081018;}
+
     .detail {
   position: relative;
   padding: 18px;
@@ -181,11 +188,11 @@ a:hover, a:focus {
       <div id="detail" class="detail empty">No record selected</div>
     </div>
 
-    <div class="meta">CSV, <code>data/chemical_list0801_20251112.csv</code>, grouped by Name + CAS number</div>
+    <div class="meta">CSV, <code>data/chemical_list0801_20251113.csv</code>, grouped by Name + CAS number</div>
   </div>
 
   <script>
-    const CSV_PATH = "data/chemical_list0801_20251112.csv";
+    const CSV_PATH = "data/chemical_list0801_20251113.csv";
 const storageColors = {
   "Chemical storage 1": "var(--storage1)",
   "Chemical storage 2": "var(--storage2)",
@@ -203,6 +210,14 @@ const categoryColors = {
   "Oxidizer": "#f472b6",
   "Detergent/Organic": "#60a5fa"
 };
+
+  // GHS signal word to color
+  function ghsColor(word) {
+    const w = lower(word);
+    if (w.includes("danger")) return "var(--ghs-danger)";
+    if (w.includes("warning")) return "var(--ghs-warning)";
+    return "var(--ghs-na)";
+  }
 
     // Utility
     const norm = s => (s ?? "").toString().trim();
@@ -282,7 +297,12 @@ const categoryColors = {
       const otherNames = group.synonyms.join("; ");
 
       row.innerHTML = `
-        <div class="line1">${highlight(group.name, q)}</div>
+        <div class="line1">
+            ${highlight(group.name, q)}
+            ${group.variants[0] && pluck(group.variants[0],"Number") ? 
+              `<span class="muted"> · ${pluck(group.variants[0],"Number")}</span>` : ""}
+        </div>
+
         <div class="line2">${q ? highlight(otherNames, q) : otherNames || "<span class='muted'>Other names not provided</span>"}</div>
         <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
         <div class="line4">${storPills || "<span class='muted'>Storage not provided</span>"} ${group.variants.length > 1 ? "<span class='muted'>&nbsp;· " + group.variants.length + " variants</span>" : ""}</div>
@@ -297,49 +317,79 @@ const categoryColors = {
       detail.classList.remove("empty");
 
       const storPills = Array.from(group.storageSet)
-  .map(storage => {
-    const color = storageColors[storage] || "var(--accent)";
-    return `<span class="pill" style="background:${color}">${storage}</span>`;
-  })
-  .join(" ");
+          .map(storage => {
+            const color = storageColors[storage] || "var(--accent)";
+            return `<span class="pill" style="background:${color}">${storage}</span>`;
+          })
+          .join(" ");
 
       const catPills = Array.from(group.categorySet)
-  .map(cat => {
-    const color = categoryColors[cat] || "var(--pill2)"; // default green if unknown
-    return `<span class="pill" style="background:${color}">${cat}</span>`;
-  })
-  .join(" ");
+          .map(cat => {
+            const color = categoryColors[cat] || "var(--pill2)"; // default green if unknown
+            return `<span class="pill" style="background:${color}">${cat}</span>`;
+          })
+          .join(" ");
 
+      // GHS badge, pick strongest signal word
+      const ghsWords = group.variants
+          .map(v => pluck(v, "GHS: Signal Word"))
+          .filter(Boolean);
+
+      let ghsBadge = "";
+      if (ghsWords.length) {
+        // Danger > Warning > anything else
+        const chosen =
+          ghsWords.find(w => /danger/i.test(w)) ||
+          ghsWords.find(w => /warning/i.test(w)) ||
+          ghsWords[0];
+
+        ghsBadge = `<span class="pill" style="background:${ghsColor(chosen)}">${chosen}</span>`;
+      }
+      
       const totals = totalsByUnit(group.variants, "Amount remain", "Amount remain unit")
         .map(x => `${x.total} ${x.unit}`).join(", ");
 
       const otherNames = group.synonyms.join("; ");
 
       // Variants table columns in this order:
-      const headers = ["Grade","Manufacturer","Import date","Product Size","Product size unit","Amount remain","Amount remain unit","Check date","Owner","Storage","SDS"];
+      const headers = [
+          "Number","Grade","Manufacturer","Open date",
+          "Product Size","Product size unit",
+          "Amount remain","Amount remain unit",
+          "Check date","Owner","Storage","SDS",
+          "SDS version","GHS: Signal Word","Receive Date","Expire Date","Price"
+        ];
 
       const rows = group.variants.map(v => `
         <tr>
+          <td>${pluck(v,"Number")}</td>
           <td>${pluck(v,"Grade")}</td>
           <td>${pluck(v,"Manufacturer")}</td>
-          <td>${pluck(v,"Import date")}</td>
+          <td>${pluck(v,"Open date")}</td>
+
           <td>${pluck(v,"Product Size")}</td>
           <td>${pluck(v,"Product size unit")}</td>
           <td>${pluck(v,"Amount remain")}</td>
           <td>${pluck(v,"Amount remain unit")}</td>
+
           <td>${pluck(v,"Check date")}</td>
           <td>${pluck(v,"Owner")}</td>
           <td>${pluck(v,"Storage")}</td>
           <td>${linkify(pluck(v,"SDS"))}</td>
+
+          <td>${pluck(v,"SDS version")}</td>
+          <td>${pluck(v,"GHS: Signal Word")}</td>
+          <td>${pluck(v,"Receive Date")}</td>
+          <td>${pluck(v,"Expire Date")}</td>
+          <td>${pluck(v,"Price")}</td>
         </tr>
       `).join("");
-
       detail.innerHTML = `
         <div class="grouphead">
           <div>
             <div class="line1">${highlight(group.name, q)}</div>
             <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
-            <div class="badges">${storPills} ${catPills}</div>
+            <div class="badges">${storPills} ${catPills} ${ghsBadge}</div>
           </div>
           <div class="muted">${group.variants.length} variant${group.variants.length>1?"s":""}</div>
         </div>
@@ -442,10 +492,12 @@ const categoryColors = {
           const ow = pluck(v, "Owner"); if (ow) own.add(ow);
 
           blob += " " + [
-            pluck(v, "CAS number search"),
-            pluck(v, "Manufacturer"),
-            pluck(v, "Category"),
-          ].join(" ");
+              pluck(v, "Number"),
+              pluck(v, "CAS number search"),
+              pluck(v, "Manufacturer"),
+              pluck(v, "Category"),
+              pluck(v, "Owner")
+            ].join(" ");
         }
 
         g.synonyms = Array.from(syn).sort((a,b)=>a.localeCompare(b));
@@ -503,16 +555,15 @@ const categoryColors = {
       delimitersToGuess: [",", "\t", ";", "|"],
       transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
       complete: results => {
-        RAW = results.data.map(r => {
-          // normalize known headers, keep raw values
-          return {
+          RAW = results.data.map(r => ({
+            "Number": pluck(r,"Number"),
             "Name": pluck(r,"Name"),
             "Other names": pluck(r,"Other names"),
             "CAS number": pluck(r,"CAS number"),
             "CAS number search": dehyphen(pluck(r,"CAS number search")),
             "Grade": pluck(r,"Grade"),
             "Manufacturer": pluck(r,"Manufacturer"),
-            "Import date": pluck(r,"Import date"),
+            "Open date": pluck(r,"Open date"),
             "Product Size": pluck(r,"Product Size"),
             "Product size unit": pluck(r,"Product size unit"),
             "Amount remain": pluck(r,"Amount remain"),
@@ -521,8 +572,13 @@ const categoryColors = {
             "Owner": pluck(r,"Owner"),
             "Category": pluck(r,"Category"),
             "Storage": pluck(r,"Storage"),
-            "SDS": pluck(r,"SDS")
-          };
+            "SDS": pluck(r,"SDS"),
+            "SDS version": pluck(r,"SDS version"),
+            "GHS: Signal Word": pluck(r,"GHS: Signal Word"),
+            "Receive Date": pluck(r,"Receive Date"),
+            "Expire Date": pluck(r,"Expire Date"),
+            "Price": pluck(r,"Price")
+          }));
         });
         GROUPS = buildGroups(RAW);
         render();
