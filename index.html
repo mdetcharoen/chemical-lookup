@@ -296,17 +296,12 @@ const categoryColors = {
   .join(" ");
       const otherNames = group.synonyms.join("; ");
 
-      row.innerHTML = `
-        <div class="line1">
-            ${highlight(group.name, q)}
-            ${group.variants[0] && pluck(group.variants[0],"Number") ? 
-              `<span class="muted"> · ${pluck(group.variants[0],"Number")}</span>` : ""}
-        </div>
-
-        <div class="line2">${q ? highlight(otherNames, q) : otherNames || "<span class='muted'>Other names not provided</span>"}</div>
-        <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
-        <div class="line4">${storPills || "<span class='muted'>Storage not provided</span>"} ${group.variants.length > 1 ? "<span class='muted'>&nbsp;· " + group.variants.length + " variants</span>" : ""}</div>
-      `;
+row.innerHTML = `
+  <div class="line1">${highlight(group.name, q)}</div>
+  <div class="line2">${q ? highlight(otherNames, q) : otherNames || "<span class='muted'>Other names not provided</span>"}</div>
+  <div class="line3">${group.cas || "<span class='muted'>CAS not provided</span>"}</div>
+  <div class="line4">${storPills || "<span class='muted'>Storage not provided</span>"} ${group.variants.length > 1 ? "<span class='muted'>&nbsp;· " + group.variants.length + " variants</span>" : ""}</div>
+`;
       row.addEventListener("click", () => showDetail(group, q));
       list.appendChild(row);
     }
