@@ -569,7 +569,7 @@
       <div class="add-card-head">
         <div class="summary-title">
           <strong>Add chemical</strong>
-          <span>Fill in the fields below. A draft preview appears in the results immediately, then becomes a saved record after you press Add to lookup.</span>
+          <span>Fill in the fields below. The inventory number is assigned automatically by Google Sheets when the record is saved.</span>
         </div>
         <div class="add-card-head-actions">
           <span class="count-pill" id="draftStatus">No draft</span>
@@ -577,12 +577,8 @@
         </div>
       </div>
       <form id="addForm" class="add-form" autocomplete="off">
-        <div class="form-note">This form adds records directly to the shared Google Sheet through Apps Script.</div>
+        <div class="form-note">This form adds records directly to the shared Google Sheet through Apps Script. The inventory number is assigned automatically after saving.</div>
         <div class="add-grid">
-          <div class="field">
-            <label class="label" for="addNumber">Inventory number</label>
-            <input class="form-input" id="addNumber" data-col="Number" placeholder="Auto, if empty" />
-          </div>
           <div class="field wide">
             <label class="label" for="addName">Chemical name *</label>
             <input class="form-input" id="addName" data-col="Name" required placeholder="e.g., Sodium chloride" />
@@ -671,7 +667,7 @@
         </div>
 
         <div class="form-actions">
-          <div class="form-note" id="addHint">Start typing to preview the new record in the result list.</div>
+          <div class="form-note" id="addHint">Start typing to preview the new record in the result list. The inventory number will appear after saving. The inventory number will appear after saving.</div>
           <div class="form-action-buttons">
             <button class="button success" id="addChemical" type="submit">Add to lookup</button>
             <button class="button" id="clearAddForm" type="button">Clear form</button>
@@ -709,7 +705,7 @@
     </section>
 
     <div class="footer-meta">
-      <span>Data source, Google Sheet via Apps Script</span>
+      <span>Data source, Google Sheet direct read + Apps Script add</span>
       <span>Grouped by Name + CAS number</span>
     </div>
   </main>
@@ -718,12 +714,13 @@
 
   <script>
     const GOOGLE_SHEET_ID = "1eySq7rlTsXHe3AjTTTrCQ3hCCw95bDxFTAXOhdbGcyk";
+    const SHEET_NAME = ""; // leave blank to read the first sheet tab
 
     /*
       Paste your deployed Apps Script Web App URL below after you deploy Code.gs.
       Example: const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec";
     */
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyG96uwvsHEyhE1awD-ujTEHWNw-MNX-W4jTXmcJDW1rkP8Zd8urvfN87sqPTGQ39VH/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyvakZrPf33BFwo3HipZl2CFec3WY0M_STx_xmuakRah4bMQGrT4DflfgGjU_ESIUJK/exec";
     const REMOTE_REFRESH_MS = 30000;
 
     const COLUMNS = [
@@ -1012,7 +1009,7 @@
         const categoryBadges = Array.from(group.categorySet).slice(0, 2).map(cat => badge(cat, categoryColors[cat] || "var(--success)")).join("");
         const signal = strongestGhs(Array.from(group.ghsSet));
         const ghsBadge = signal ? badge(signal, ghsColor(signal)) : "";
-        const draftBadge = group.variants.some(v => v.__draft === "true") ? badge("Draft preview", "var(--accent-2)") : "";
+        const draftBadge = group.variants.some(v => v.__draft === "true") ? badge("Draft preview", "#bfdbfe") : "";
         const synonyms = group.synonyms.join("; ");
 
         row.innerHTML = `
@@ -1222,30 +1219,22 @@
       return COLUMNS.some(col => col !== "CAS number search" && !!pluck(row, col));
     }
 
-    function nextNumber() {
-      let max = 0;
-      RAW.forEach(row => {
-        const match = pluck(row, "Number").match(/(\d+)$/);
-        if (match) max = Math.max(max, Number(match[1]));
-      });
-      return `Bsc0801-${String(max + 1).padStart(3, "0")}`;
-    }
 
     function updateDraftFromForm() {
       const row = serializeAddForm();
       if (!formHasContent(row)) {
         DRAFT_ROW = null;
         els.draftStatus.textContent = "No draft";
-        els.addHint.textContent = "Start typing to preview the new record in the result list.";
+        els.addHint.textContent = "Start typing to preview the new record in the result list. The inventory number will appear after saving. The inventory number will appear after saving.";
         render();
         return;
       }
-      if (!row["Number"]) row["Number"] = nextNumber();
+      row["Number"] = "Assigned after saving";
       row.__draft = "true";
       DRAFT_ROW = row;
       selectedKey = groupKey(row);
       els.draftStatus.textContent = row["Name"] ? "Previewing" : "Name needed";
-      els.addHint.textContent = row["Name"] ? "Draft preview is visible at the top of the result list." : "Chemical name is required before saving.";
+      els.addHint.textContent = row["Name"] ? "Draft preview is visible at the top of the result list. The final number will be assigned by Google Sheets." : "Chemical name is required before saving. The final number will be assigned by Google Sheets.";
       render();
     }
 
@@ -1253,7 +1242,7 @@
       els.addForm.reset();
       DRAFT_ROW = null;
       els.draftStatus.textContent = "No draft";
-      els.addHint.textContent = "Start typing to preview the new record in the result list.";
+      els.addHint.textContent = "Start typing to preview the new record in the result list. The inventory number will appear after saving. The inventory number will appear after saving.";
       render();
     }
 
@@ -1263,7 +1252,7 @@
         showToast("Chemical name is required");
         return;
       }
-      if (!row["Number"]) row["Number"] = nextNumber();
+      row["Number"] = "";
       row["CAS number search"] = dehyphen(row["CAS number"]);
       const clean = normalizeRow(row);
 
@@ -1273,7 +1262,7 @@
 
       if (!hasAppsScript()) {
         showToast("Connect Apps Script URL first");
-        renderEmpty("Google Sheet connection needed", "Paste the deployed Apps Script Web App URL into APPS_SCRIPT_URL in index.html.");
+        renderEmpty("Apps Script connection needed for adding", "The lookup can read the Google Sheet directly, but adding rows still needs the deployed Apps Script Web App URL in APPS_SCRIPT_URL.");
         els.addChemical.disabled = false;
         els.addChemical.textContent = previousButtonText;
         return;
@@ -1292,7 +1281,7 @@
         await postRowToAppsScript(clean);
         clearAddForm();
         selectedKey = optimisticKey;
-        showToast("Added to Google Sheet");
+        showToast("Added to Google Sheet, number assigned");
         window.setTimeout(() => loadData({ silent: true, keepSelection: true }), 1500);
       } catch (err) {
         RAW = RAW.filter(r => r !== clean);
@@ -1322,41 +1311,109 @@
       render();
     }
 
-    function jsonp(url, params = {}) {
-      return new Promise((resolve, reject) => {
-        const callbackName = `bsc0801_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const script = document.createElement("script");
-        const cleanup = () => {
-          delete window[callbackName];
-          script.remove();
-          window.clearTimeout(timer);
-        };
-        const timer = window.setTimeout(() => {
-          cleanup();
-          reject(new Error("Google Sheet request timed out"));
-        }, 15000);
-
-        window[callbackName] = data => {
-          cleanup();
-          resolve(data);
-        };
-
-        const query = new URLSearchParams({ ...params, callback: callbackName, cache: String(Date.now()) });
-        script.src = `${url}${url.includes("?") ? "&" : "?"}${query.toString()}`;
-        script.onerror = () => {
-          cleanup();
-          reject(new Error("Could not load Google Sheet data"));
-        };
-        document.head.appendChild(script);
-      });
+    function googleSheetReadUrl() {
+      const params = new URLSearchParams({ tqx: "out:json", cache: String(Date.now()) });
+      if (SHEET_NAME) params.set("sheet", SHEET_NAME);
+      return `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEET_ID}/gviz/tq?${params.toString()}`;
     }
 
-    async function loadRowsFromAppsScript() {
-      const data = await jsonp(APPS_SCRIPT_URL, { action: "list" });
-      if (!data || data.status !== "ok" || !Array.isArray(data.rows)) {
-        throw new Error(data && data.message ? data.message : "Apps Script returned no rows");
+    function cellValueToText(cell) {
+      if (!cell) return "";
+      if (cell.f !== undefined && cell.f !== null) return String(cell.f).trim();
+      const value = cell.v;
+      if (value === undefined || value === null) return "";
+      if (value instanceof Date) {
+        const yyyy = value.getFullYear();
+        const mm = String(value.getMonth() + 1).padStart(2, "0");
+        const dd = String(value.getDate()).padStart(2, "0");
+        return `${yyyy}-${mm}-${dd}`;
       }
-      return data.rows.map(normalizeRow);
+      return String(value).trim();
+    }
+
+    function parseGoogleSheetResponse(data) {
+      if (!data) throw new Error("Google Sheets returned an empty response.");
+      if (data.status === "error") {
+        const message = (data.errors || [])
+          .map(error => error.detailed_message || error.message || error.reason)
+          .filter(Boolean)
+          .join("; ");
+        throw new Error(message || "Google Sheets returned an error.");
+      }
+      if (!data.table || !Array.isArray(data.table.cols) || !Array.isArray(data.table.rows)) {
+        throw new Error("Google Sheets response did not include a table. Check that the sheet is shared and has a header row.");
+      }
+
+      const headers = data.table.cols.map(col => norm(col.label || col.id));
+      if (!headers.includes("Name")) {
+        throw new Error('The first row of the Google Sheet must contain column headers, including "Name".');
+      }
+
+      return data.table.rows
+        .map(row => {
+          const obj = {};
+          headers.forEach((header, index) => {
+            if (!header) return;
+            obj[header] = cellValueToText(row.c ? row.c[index] : null);
+          });
+          return normalizeRow(obj);
+        })
+        .filter(row => COLUMNS.some(col => row[col]));
+    }
+
+    function loadRowsFromGoogleSheet() {
+      return new Promise((resolve, reject) => {
+        window.google = window.google || {};
+        window.google.visualization = window.google.visualization || {};
+        window.google.visualization.Query = window.google.visualization.Query || {};
+
+        const previousSetResponse = window.google.visualization.Query.setResponse;
+        const script = document.createElement("script");
+        let finished = false;
+
+        const cleanup = () => {
+          window.clearTimeout(timer);
+          script.remove();
+          if (previousSetResponse) window.google.visualization.Query.setResponse = previousSetResponse;
+          else delete window.google.visualization.Query.setResponse;
+        };
+
+        const finish = callback => {
+          if (finished) return;
+          finished = true;
+          callback();
+        };
+
+        const timer = window.setTimeout(() => {
+          finish(() => {
+            cleanup();
+            reject(new Error("Google Sheet request timed out. Check sharing permissions and internet access."));
+          });
+        }, 15000);
+
+        window.google.visualization.Query.setResponse = data => {
+          finish(() => {
+            try {
+              const rows = parseGoogleSheetResponse(data);
+              cleanup();
+              resolve(rows);
+            } catch (err) {
+              cleanup();
+              reject(err);
+            }
+          });
+        };
+
+        script.onerror = () => {
+          finish(() => {
+            cleanup();
+            reject(new Error("Could not load the Google Sheet. Check that the link is accessible to anyone with the link."));
+          });
+        };
+
+        script.src = googleSheetReadUrl();
+        document.head.appendChild(script);
+      });
     }
 
     function postRowToAppsScript(row) {
@@ -1406,30 +1463,21 @@
       const silent = options.silent === true;
       const keepSelection = options.keepSelection !== false;
 
-      if (!hasAppsScript()) {
-        setLoaded(false, "Apps Script URL needed");
-        RAW = [];
-        GROUPS = [];
-        updateStats();
-        renderEmpty("Google Sheet connection needed", "Deploy Code.gs as an Apps Script Web App, then paste the /exec URL into APPS_SCRIPT_URL in index.html.");
-        return;
-      }
-
       try {
         if (!silent) setLoaded(true, "Loading Google Sheet");
-        const rows = await loadRowsFromAppsScript();
+        const rows = await loadRowsFromGoogleSheet();
         rebuildFromRows(rows, { keepSelection });
         setLoaded(true, `Google Sheet live, ${rows.length} records`);
         startRemoteRefresh();
       } catch (err) {
         setLoaded(false, "Google Sheet failed");
-        renderEmpty("Failed to load data", String(err));
+        renderEmpty("Failed to load Google Sheet", String(err));
         console.error(err);
       }
     }
 
     function startRemoteRefresh() {
-      if (REMOTE_REFRESH_TIMER || !hasAppsScript()) return;
+      if (REMOTE_REFRESH_TIMER) return;
       REMOTE_REFRESH_TIMER = window.setInterval(() => {
         const addPanelOpen = !els.addPanel.hidden;
         const hasDraft = !!DRAFT_ROW;
