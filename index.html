@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>BSc0801 Chemical Lookup</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -534,8 +533,6 @@
         </div>
         <div class="header-actions">
           <button class="button success" id="openAddPanel" type="button">Add chemical</button>
-          <button class="button primary" id="exportCsvTop" type="button">Export CSV</button>
-          <button class="button" id="resetAllTop" type="button">Reset</button>
         </div>
       </div>
     </section>
@@ -565,7 +562,6 @@
           <label class="label" for="ownerFilter">Owner</label>
           <select class="select" id="ownerFilter"><option value="">All owners</option></select>
         </div>
-        <button class="button" id="resetFilters" type="button">Clear filters</button>
       </div>
     </section>
 
@@ -581,7 +577,7 @@
         </div>
       </div>
       <form id="addForm" class="add-form" autocomplete="off">
-        <div class="form-note">When connected to Apps Script, this form adds records directly to the shared Google Sheet. Without Apps Script, records are stored only in this browser and can be exported as CSV.</div>
+        <div class="form-note">This form adds records directly to the shared Google Sheet through Apps Script.</div>
         <div class="add-grid">
           <div class="field">
             <label class="label" for="addNumber">Inventory number</label>
@@ -679,8 +675,6 @@
           <div class="form-action-buttons">
             <button class="button success" id="addChemical" type="submit">Add to lookup</button>
             <button class="button" id="clearAddForm" type="button">Clear form</button>
-            <button class="button primary" id="exportCsvForm" type="button">Export CSV</button>
-            <button class="button danger-soft" id="clearLocalRows" type="button" title="Remove only records added in this browser">Clear browser-added records</button>
           </div>
         </div>
       </form>
@@ -715,7 +709,7 @@
     </section>
 
     <div class="footer-meta">
-      <span>Data source, Google Sheet via Apps Script, with CSV fallback at <code>data/chemical_list0801_20251113.csv</code></span>
+      <span>Data source, Google Sheet via Apps Script</span>
       <span>Grouped by Name + CAS number</span>
     </div>
   </main>
@@ -723,15 +717,13 @@
   <div class="toast" id="toast">Copied</div>
 
   <script>
-    const CSV_PATH = "data/chemical_list0801_20251113.csv";
     const GOOGLE_SHEET_ID = "1eySq7rlTsXHe3AjTTTrCQ3hCCw95bDxFTAXOhdbGcyk";
 
     /*
       Paste your deployed Apps Script Web App URL below after you deploy Code.gs.
-      Keep it blank while testing from the included CSV.
-      Example: const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_U9i-hTHQZl2xCQ1u0DEeUAYsbHm2o64mQrmPdHilhnbBTPjJR1MIeEs87dwJ3F-V/exec";
+      Example: const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycb.../exec";
     */
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_U9i-hTHQZl2xCQ1u0DEeUAYsbHm2o64mQrmPdHilhnbBTPjJR1MIeEs87dwJ3F-V/exec";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyG96uwvsHEyhE1awD-ujTEHWNw-MNX-W4jTXmcJDW1rkP8Zd8urvfN87sqPTGQ39VH/exec";
     const REMOTE_REFRESH_MS = 30000;
 
     const COLUMNS = [
@@ -739,8 +731,6 @@
       "Product Size", "Product size unit", "Amount remain", "Amount remain unit", "Check date", "Owner",
       "Category", "Storage", "SDS", "SDS version", "GHS: Signal Word", "Receive Date", "Expire Date", "Price"
     ];
-    const LOCAL_STORAGE_KEY = "bsc0801_chemical_lookup_added_records_v3";
-
     const storageColors = {
       "Chemical storage 1": "var(--storage1)",
       "Chemical storage 2": "var(--storage2)",
@@ -776,37 +766,18 @@
       return clean;
     }
 
-    function loadLocalRows() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-        return Array.isArray(parsed) ? parsed.map(normalizeRow) : [];
-      } catch (err) {
-        console.warn("Could not load locally added records", err);
-        return [];
-      }
-    }
-
-    function saveLocalRows() {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(LOCAL_ROWS.map(normalizeRow)));
-    }
-
     const els = {
       q: document.getElementById("q"),
       clearSearch: document.getElementById("clearSearch"),
       categoryFilter: document.getElementById("categoryFilter"),
       storageFilter: document.getElementById("storageFilter"),
       ownerFilter: document.getElementById("ownerFilter"),
-      resetFilters: document.getElementById("resetFilters"),
-      resetAllTop: document.getElementById("resetAllTop"),
-      exportCsvTop: document.getElementById("exportCsvTop"),
       openAddPanel: document.getElementById("openAddPanel"),
       closeAddPanel: document.getElementById("closeAddPanel"),
       addPanel: document.getElementById("addPanel"),
       addForm: document.getElementById("addForm"),
       addChemical: document.getElementById("addChemical"),
       clearAddForm: document.getElementById("clearAddForm"),
-      exportCsvForm: document.getElementById("exportCsvForm"),
-      clearLocalRows: document.getElementById("clearLocalRows"),
       addHint: document.getElementById("addHint"),
       draftStatus: document.getElementById("draftStatus"),
       list: document.getElementById("list"),
@@ -814,9 +785,7 @@
       statusText: document.getElementById("statusText"),
       statusDot: document.getElementById("statusDot"),
       statChemicals: document.getElementById("statChemicals"),
-      statVariants: document.getElementById("statVariants"),
       statStorage: document.getElementById("statStorage"),
-      statDanger: document.getElementById("statDanger"),
       toast: document.getElementById("toast")
     };
 
@@ -824,7 +793,6 @@
     let GROUPS = [];
     let QUERY = "";
     let selectedKey = "";
-    let LOCAL_ROWS = [];
     let DRAFT_ROW = null;
     let REMOTE_REFRESH_TIMER = null;
 
@@ -1301,86 +1269,40 @@
 
       const previousButtonText = els.addChemical.textContent;
       els.addChemical.disabled = true;
-      els.addChemical.textContent = hasAppsScript() ? "Adding to sheet..." : "Adding...";
+      els.addChemical.textContent = "Adding to sheet...";
 
-      if (hasAppsScript()) {
-        const optimisticKey = groupKey(clean);
-        RAW.push(clean);
-        GROUPS = buildGroups(RAW);
-        populateFilters(GROUPS);
-        populateAddDatalists(GROUPS);
-        updateStats();
-        selectedKey = optimisticKey;
-        render();
-
-        try {
-          await postRowToAppsScript(clean);
-          clearAddForm();
-          selectedKey = optimisticKey;
-          showToast("Added to Google Sheet");
-          window.setTimeout(() => loadData({ silent: true, keepSelection: true }), 1500);
-        } catch (err) {
-          RAW = RAW.filter(r => r !== clean);
-          rebuildFromRows(RAW, { keepSelection: false });
-          showToast("Could not add to sheet");
-          console.error(err);
-        } finally {
-          els.addChemical.disabled = false;
-          els.addChemical.textContent = previousButtonText;
-        }
+      if (!hasAppsScript()) {
+        showToast("Connect Apps Script URL first");
+        renderEmpty("Google Sheet connection needed", "Paste the deployed Apps Script Web App URL into APPS_SCRIPT_URL in index.html.");
+        els.addChemical.disabled = false;
+        els.addChemical.textContent = previousButtonText;
         return;
       }
 
+      const optimisticKey = groupKey(clean);
       RAW.push(clean);
-      LOCAL_ROWS.push(clean);
-      saveLocalRows();
       GROUPS = buildGroups(RAW);
       populateFilters(GROUPS);
       populateAddDatalists(GROUPS);
       updateStats();
-      selectedKey = groupKey(clean);
-      clearAddForm();
-      selectedKey = groupKey(clean);
+      selectedKey = optimisticKey;
       render();
-      setLoaded(true, `CSV fallback + ${LOCAL_ROWS.length} browser-added`);
-      showToast("Added to lookup");
-      els.addChemical.disabled = false;
-      els.addChemical.textContent = previousButtonText;
-    }
 
-    function exportCsv() {
-      const rows = RAW.map(normalizeRow);
-      const csv = Papa.unparse(rows, { columns: COLUMNS });
-      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      link.href = url;
-      link.download = `chemical_list0801_updated_${stamp}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      showToast("CSV exported");
-    }
-
-    function clearBrowserAddedRows() {
-      if (hasAppsScript()) {
-        showToast("Google Sheet mode uses the shared sheet");
-        return;
+      try {
+        await postRowToAppsScript(clean);
+        clearAddForm();
+        selectedKey = optimisticKey;
+        showToast("Added to Google Sheet");
+        window.setTimeout(() => loadData({ silent: true, keepSelection: true }), 1500);
+      } catch (err) {
+        RAW = RAW.filter(r => r !== clean);
+        rebuildFromRows(RAW, { keepSelection: false });
+        showToast("Could not add to sheet");
+        console.error(err);
+      } finally {
+        els.addChemical.disabled = false;
+        els.addChemical.textContent = previousButtonText;
       }
-      if (!LOCAL_ROWS.length) {
-        showToast("No browser-added records");
-        return;
-      }
-      const ok = confirm(`Remove ${LOCAL_ROWS.length} record${LOCAL_ROWS.length > 1 ? "s" : ""} added in this browser? This will not change the original CSV file.`);
-      if (!ok) return;
-      const localKeys = new Set(LOCAL_ROWS.map(row => JSON.stringify(normalizeRow(row))));
-      RAW = RAW.filter(row => !localKeys.has(JSON.stringify(normalizeRow(row))));
-      LOCAL_ROWS = [];
-      saveLocalRows();
-      rebuildFromRows(RAW, { keepSelection: false });
-      showToast("Browser-added records cleared");
     }
 
     function hasAppsScript() {
@@ -1480,41 +1402,27 @@
       });
     }
 
-    function loadRowsFromCsvFallback() {
-      return new Promise((resolve, reject) => {
-        Papa.parse(CSV_PATH, {
-          download: true,
-          header: true,
-          skipEmptyLines: true,
-          delimitersToGuess: [",", "\t", ";", "|"],
-          transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
-          complete: results => resolve(results.data.map(normalizeRow)),
-          error: reject
-        });
-      });
-    }
-
     async function loadData(options = {}) {
       const silent = options.silent === true;
       const keepSelection = options.keepSelection !== false;
-      try {
-        if (hasAppsScript()) {
-          if (!silent) setLoaded(true, "Loading Google Sheet");
-          const rows = await loadRowsFromAppsScript();
-          LOCAL_ROWS = [];
-          rebuildFromRows(rows, { keepSelection });
-          setLoaded(true, `Google Sheet live, ${rows.length} records`);
-          startRemoteRefresh();
-          return;
-        }
 
-        if (!silent) setLoaded(true, "Loading CSV fallback");
-        LOCAL_ROWS = loadLocalRows();
-        const rows = await loadRowsFromCsvFallback();
-        rebuildFromRows([...rows, ...LOCAL_ROWS], { keepSelection });
-        setLoaded(true, LOCAL_ROWS.length ? `CSV fallback + ${LOCAL_ROWS.length} browser-added` : "CSV fallback loaded");
+      if (!hasAppsScript()) {
+        setLoaded(false, "Apps Script URL needed");
+        RAW = [];
+        GROUPS = [];
+        updateStats();
+        renderEmpty("Google Sheet connection needed", "Deploy Code.gs as an Apps Script Web App, then paste the /exec URL into APPS_SCRIPT_URL in index.html.");
+        return;
+      }
+
+      try {
+        if (!silent) setLoaded(true, "Loading Google Sheet");
+        const rows = await loadRowsFromAppsScript();
+        rebuildFromRows(rows, { keepSelection });
+        setLoaded(true, `Google Sheet live, ${rows.length} records`);
+        startRemoteRefresh();
       } catch (err) {
-        setLoaded(false, hasAppsScript() ? "Google Sheet failed" : "CSV failed to load");
+        setLoaded(false, "Google Sheet failed");
         renderEmpty("Failed to load data", String(err));
         console.error(err);
       }
@@ -1531,16 +1439,12 @@
 
     function updateStats() {
       const storage = new Set();
-      let danger = 0;
       RAW.forEach(r => {
         const st = pluck(r, "Storage");
         if (st) storage.add(st);
-        if (/danger/i.test(pluck(r, "GHS: Signal Word"))) danger += 1;
       });
       els.statChemicals.textContent = String(GROUPS.length);
-      if (els.statVariants) els.statVariants.textContent = String(RAW.length);
       els.statStorage.textContent = String(storage.size);
-      if (els.statDanger) els.statDanger.textContent = String(danger);
     }
 
     function openAddPanel() {
@@ -1552,16 +1456,6 @@
 
     function closeAddPanel() {
       els.addPanel.hidden = true;
-    }
-
-    function resetAll() {
-      QUERY = "";
-      selectedKey = "";
-      els.q.value = "";
-      els.categoryFilter.value = "";
-      els.storageFilter.value = "";
-      els.ownerFilter.value = "";
-      render();
     }
 
     function copyText(text) {
@@ -1597,14 +1491,9 @@
     [els.categoryFilter, els.storageFilter, els.ownerFilter].forEach(el => el.addEventListener("change", render));
     els.q.addEventListener("input", e => { QUERY = e.target.value || ""; render(); });
     els.clearSearch.addEventListener("click", () => { QUERY = ""; els.q.value = ""; render(); els.q.focus(); });
-    els.resetFilters.addEventListener("click", resetAll);
-    els.resetAllTop.addEventListener("click", resetAll);
-    els.exportCsvTop.addEventListener("click", exportCsv);
     els.openAddPanel.addEventListener("click", openAddPanel);
     els.closeAddPanel.addEventListener("click", closeAddPanel);
-    els.exportCsvForm.addEventListener("click", exportCsv);
     els.clearAddForm.addEventListener("click", clearAddForm);
-    els.clearLocalRows.addEventListener("click", clearBrowserAddedRows);
     els.addForm.addEventListener("input", updateDraftFromForm);
     els.addForm.addEventListener("submit", e => { e.preventDefault(); addChemicalFromForm(); });
 
