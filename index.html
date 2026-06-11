@@ -1,1614 +1,467 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>BSc0801 Chemical Lookup</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      color-scheme: light;
-      --bg: #f6f8fb;
-      --surface: #ffffff;
-      --surface-soft: #f8fafc;
-      --surface-hover: #f1f5f9;
-      --border: #d7dee8;
-      --border-strong: #94a3b8;
-      --text: #111827;
-      --text-strong: #0f172a;
-      --muted: #64748b;
-      --muted-soft: #94a3b8;
-      --accent: #2563eb;
-      --accent-soft: #eff6ff;
-      --danger: #dc2626;
-      --warning: #d97706;
-      --success: #059669;
-      --radius-xl: 16px;
-      --radius-lg: 12px;
-      --radius-md: 10px;
-      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-      --storage1: #F8F2CD;
-      --storage2: #34d399;
-      --storage3: #f59e0b;
-      --ownershelf: #a78bfa;
-      --refrigerator: #60a5fa;
-    }
 
-    * { box-sizing: border-box; }
-    html, body { min-height: 100%; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-    }
-
-    a, a:visited { color: var(--accent); text-decoration: none; }
-    a:hover, a:focus { text-decoration: underline; }
-    button, input, select, textarea { font: inherit; }
-
-    .app-shell {
-      width: min(1240px, calc(100vw - 32px));
-      margin: 0 auto;
-      padding: 20px 0 48px;
-    }
-
-    .hero {
-      padding: 14px 0 18px;
-      background: transparent;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 18px;
-    }
-
-    .hero-inner {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 20px;
-      align-items: center;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      margin-bottom: 6px;
-    }
-
-    .status-dot { display: none; }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(26px, 3vw, 36px);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      color: var(--text-strong);
-    }
-
-    .subtitle {
-      margin: 8px 0 0;
-      color: var(--muted);
-      max-width: 760px;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-    }
-
-    .button {
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 9px 12px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 38px;
-    }
-
-    .button:hover { border-color: var(--border-strong); background: var(--surface-hover); }
-    .button.primary, .button.success {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #ffffff;
-    }
-    .button.warning { background: #fff7ed; border-color: #fed7aa; color: #9a3412; }
-    .button.danger-soft { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-
-    .toolbar-card {
-      margin: 0 0 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .search-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-      padding: 14px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .search-wrap { position: relative; }
-    .search-icon {
-      position: absolute;
-      left: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      width: 19px;
-      height: 19px;
-      pointer-events: none;
-    }
-
-    .search-input {
-      width: 100%;
-      border: 1px solid var(--border);
-      color: var(--text-strong);
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 14px 50px 14px 44px;
-      outline: none;
-      font-size: 16px;
-    }
-
-    .search-input:focus, .form-input:focus, .form-textarea:focus, .select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
-    }
-
-    .clear-search {
-      position: absolute;
-      right: 9px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 34px;
-      height: 34px;
-      display: grid;
-      place-items: center;
-      border-radius: 8px;
-      border: 1px solid transparent;
-      background: transparent;
-      color: var(--muted);
-      cursor: pointer;
-      font-size: 20px;
-      line-height: 1;
-    }
-
-    .clear-search:hover { color: var(--text-strong); background: var(--surface-hover); }
-
-    .label {
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .select {
-      appearance: none;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 11px 34px 11px 11px;
-      outline: none;
-      cursor: pointer;
-      background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
-      background-position: calc(100% - 17px) 52%, calc(100% - 11px) 52%;
-      background-size: 6px 6px, 6px 6px;
-      background-repeat: no-repeat;
-    }
-
-    .filter-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(160px, 1fr)) auto;
-      gap: 10px;
-      padding: 12px 14px 14px;
-      align-items: end;
-    }
-
-    .field { display: grid; gap: 6px; }
-
-    .dashboard {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-      margin: 0 0 14px;
-    }
-
-    .stat-card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      padding: 14px;
-      min-height: 78px;
-      box-shadow: var(--shadow);
-    }
-
-    .stat-card::after { display: none; }
-    .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-    .stat-value {
-      margin-top: 7px;
-      color: var(--text-strong);
-      font-size: 28px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-    }
-
-    .content-grid {
-      display: block;
-    }
-
-    .panel {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-
-    .panel-head {
-      padding: 13px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-    }
-
-    .panel-title { color: var(--text-strong); font-size: 15px; font-weight: 800; }
-    .count-pill {
-      color: var(--accent);
-      background: var(--accent-soft);
-      border: 1px solid #bfdbfe;
-      border-radius: 999px;
-      padding: 4px 9px;
-      font-size: 12px;
-      font-weight: 800;
-      white-space: nowrap;
-    }
-
-    .results-list {
-      min-height: 320px;
-      overflow: visible;
-    }
-
-    .result-card {
-      border-bottom: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .result-card:last-child { border-bottom: 0; }
-
-    .result-row {
-      width: 100%;
-      text-align: left;
-      border: 0;
-      background: transparent;
-      color: var(--text);
-      padding: 14px;
-      cursor: pointer;
-      display: grid;
-      gap: 7px;
-    }
-
-    .result-row:hover, .result-row.active { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
-    .inline-detail {
-      border-top: 1px solid var(--border);
-      background: var(--surface);
-    }
-    .result-name { color: var(--text-strong); font-weight: 800; line-height: 1.25; }
-    .result-meta, .result-synonyms { color: var(--muted); font-size: 12px; line-height: 1.45; }
-
-    mark {
-      color: #1d4ed8;
-      background: #dbeafe;
-      border-radius: 3px;
-      padding: 0 2px;
-      font-weight: 800;
-    }
-
-    .badge-line { display: flex; gap: 6px; flex-wrap: wrap; }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      max-width: 100%;
-      padding: 4px 8px;
-      border-radius: 999px;
-      color: #081018;
-      font-size: 11px;
-      font-weight: 800;
-      line-height: 1.2;
-      white-space: nowrap;
-    }
-    .badge.neutral { color: var(--text); background: #f1f5f9; border: 1px solid var(--border); }
-
-    .empty-state {
-      min-height: 420px;
-      display: grid;
-      place-items: center;
-      text-align: center;
-      padding: 32px;
-      color: var(--muted);
-    }
-    .empty-state svg { width: 44px; height: 44px; margin-bottom: 12px; color: var(--accent); opacity: 0.72; }
-
-    .detail-hero {
-      padding: 18px;
-      background: var(--surface-soft);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .detail-topline {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: 12px;
-    }
-
-    .detail-name {
-      margin: 0 0 8px;
-      color: var(--text-strong);
-      font-size: clamp(22px, 3vw, 32px);
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-    }
-
-    .cas-line { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; color: var(--muted); font-size: 13px; }
-    .copy-btn {
-      border: 1px solid #bfdbfe;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border-radius: 999px;
-      padding: 4px 8px;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 800;
-    }
-    .detail-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      padding: 14px;
-    }
-
-    .info-card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      background: var(--surface);
-      padding: 12px;
-      min-height: 76px;
-    }
-    .info-card .k { color: var(--muted); font-size: 11px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; }
-    .info-card .v { margin-top: 7px; color: var(--text-strong); font-weight: 800; line-height: 1.4; word-break: break-word; }
-
-    .detail-section { padding: 0 14px 14px; }
-    .section-title { color: var(--text-strong); font-weight: 800; margin: 4px 0 10px; }
-    .synonym-box {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      background: var(--surface-soft);
-      color: var(--muted);
-      padding: 12px 14px;
-      line-height: 1.55;
-      font-size: 13px;
-    }
-
-    .table-card { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; background: var(--surface); }
-    .table-scroll { overflow: auto; max-height: 430px; }
-    table { width: 100%; border-collapse: collapse; min-width: 1050px; }
-    th, td { border-bottom: 1px solid var(--border); padding: 10px 12px; text-align: left; font-size: 12px; vertical-align: top; }
-    th { position: sticky; top: 0; z-index: 2; background: #f8fafc; color: var(--muted); font-weight: 800; letter-spacing: 0.02em; white-space: nowrap; }
-    td { color: var(--text); }
-    tr:hover td { background: var(--surface-hover); }
-
-    .muted { color: var(--muted); }
-    .small { font-size: 12px; }
-
-    .add-card {
-      margin: 0 0 14px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-xl);
-      background: var(--surface);
-      box-shadow: var(--shadow);
-      overflow: hidden;
-    }
-    .add-card[hidden] { display: none; }
-    .add-card-head {
-      padding: 14px 16px;
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      background: var(--surface-soft);
-    }
-    .add-card-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-    .summary-title { display: grid; gap: 4px; }
-    .summary-title strong { color: var(--text-strong); font-size: 16px; }
-    .summary-title span, .form-note { color: var(--muted); font-size: 12px; line-height: 1.45; }
-
-    .add-form { padding: 14px; display: grid; gap: 14px; }
-    .add-grid { display: grid; grid-template-columns: repeat(4, minmax(160px, 1fr)); gap: 10px; }
-    .add-grid .wide { grid-column: span 2; }
-    .form-input, .form-textarea {
-      width: 100%;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      border-radius: 10px;
-      padding: 11px;
-      outline: none;
-    }
-    .form-textarea { min-height: 44px; resize: vertical; }
-    .form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; border-top: 1px solid var(--border); padding-top: 14px; }
-    .form-action-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-
-    .draft-banner {
-      margin: 0 14px 14px;
-      border: 1px solid #bfdbfe;
-      background: var(--accent-soft);
-      border-radius: var(--radius-lg);
-      color: var(--accent);
-      padding: 10px 12px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .footer-meta { margin-top: 16px; color: var(--muted-soft); font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; }
-    .toast {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      z-index: 50;
-      border: 1px solid var(--border);
-      background: var(--text-strong);
-      color: #ffffff;
-      border-radius: 999px;
-      padding: 10px 14px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
-      opacity: 0;
-      transform: translateY(8px);
-      pointer-events: none;
-      transition: opacity 0.18s ease, transform 0.18s ease;
-      font-size: 13px;
-    }
-    .toast.show { opacity: 1; transform: translateY(0); }
-
-    @media (max-width: 1050px) {
-      .hero-inner { grid-template-columns: 1fr; }
-      .header-actions { justify-content: flex-start; }
-      .dashboard { grid-template-columns: repeat(2, 1fr); }
-      .filter-row { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-      .add-grid { grid-template-columns: repeat(2, minmax(160px, 1fr)); }
-    }
-
-    @media (max-width: 720px) {
-      .app-shell { width: min(100% - 22px, 1240px); padding-bottom: 36px; }
-      .filter-row { grid-template-columns: 1fr; }
-      .add-grid { grid-template-columns: 1fr; }
-      .add-grid .wide { grid-column: span 1; }
-      .dashboard { grid-template-columns: 1fr; }
-      .info-grid { grid-template-columns: 1fr; }
-      .detail-topline { flex-direction: column; }
-      .detail-actions { justify-content: flex-start; }
-    }
-
-  </style>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>BSc0801 Chemical Lookup</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed-variant": "#38485d",
+                    "surface-tint": "#0053db",
+                    "primary": "#004ac6",
+                    "on-primary-fixed-variant": "#003ea8",
+                    "error": "#ba1a1a",
+                    "on-tertiary-container": "#eef0ff",
+                    "secondary-container": "#d0e1fb",
+                    "outline-variant": "#c3c6d7",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary-container": "#eeefff",
+                    "background": "#f7f9fb",
+                    "on-secondary-fixed": "#0b1c30",
+                    "secondary": "#505f76",
+                    "on-error": "#ffffff",
+                    "surface": "#f7f9fb",
+                    "surface-container-low": "#f2f4f6",
+                    "on-secondary": "#ffffff",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "on-tertiary-fixed": "#131b2e",
+                    "surface-container-highest": "#e0e3e5",
+                    "surface-variant": "#e0e3e5",
+                    "on-surface": "#191c1e",
+                    "surface-container-high": "#e6e8ea",
+                    "on-primary": "#ffffff",
+                    "tertiary-fixed-dim": "#bec6e0",
+                    "surface-container": "#eceef0",
+                    "tertiary-container": "#656d84",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "on-background": "#191c1e",
+                    "surface-dim": "#d8dadc",
+                    "surface-bright": "#f7f9fb",
+                    "on-primary-fixed": "#00174b",
+                    "on-error-container": "#93000a",
+                    "primary-container": "#2563eb",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary": "#4d556b",
+                    "outline": "#737686",
+                    "on-tertiary-fixed-variant": "#3f465c",
+                    "on-secondary-container": "#54647a",
+                    "on-surface-variant": "#434655",
+                    "inverse-surface": "#2d3133",
+                    "error-container": "#ffdad6",
+                    "secondary-fixed": "#d3e4fe",
+                    "tertiary-fixed": "#dae2fd",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-tertiary": "#ffffff"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "sm": "0.5rem",
+                    "lg": "1.5rem",
+                    "md": "1rem",
+                    "xl": "2rem",
+                    "container-max": "1440px",
+                    "base": "4px",
+                    "gutter": "24px",
+                    "xs": "0.25rem"
+            },
+            "fontFamily": {
+                    "headline-md": ["Inter"],
+                    "code-data": ["Inter"],
+                    "headline-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "label-md": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "code-data": ["14px", {"lineHeight": "20px", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "display-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
 </head>
-<body>
-  <main class="app-shell">
-    <section class="hero">
-      <div class="hero-inner">
-        <div>
-          <div class="eyebrow"><span class="status-dot" id="statusDot"></span><span id="statusText">Loading data</span></div>
-          <h1>BSc0801 Chemical Lookup</h1>
-          <p class="subtitle">Search chemicals by name, synonym, CAS number, owner, manufacturer, or inventory number. Click a result to expand details in the same list.</p>
-        </div>
-        <div class="header-actions">
-          <button class="button success" id="openAddPanel" type="button">Add chemical</button>
-          <button class="button primary" id="exportCsvTop" type="button">Export CSV</button>
-          <button class="button" id="resetAllTop" type="button">Reset</button>
-        </div>
-      </div>
-    </section>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+<!-- Top Navigation -->
+<header class="bg-surface dark:bg-surface-dim border-b border-outline-variant dark:border-on-surface-variant shadow-sm flex justify-between items-center w-full px-lg h-16 sticky top-0 z-50">
+<div class="flex items-center gap-lg">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed-dim">BSc0801</span>
+<nav class="hidden md:flex gap-md">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary font-headline-sm text-headline-sm font-semibold hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors px-sm py-xs" href="#">Lookup</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-headline-sm text-headline-sm font-semibold hover:bg-surface-container-low dark:hover:bg-surface-container-highest transition-colors px-sm py-xs" href="#">Inventory</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-xl pr-sm py-xs border border-outline-variant rounded-lg bg-surface-container-lowest focus:ring-2 focus:ring-primary focus:border-primary text-body-md font-body-md w-64" placeholder="Search..." type="text"/>
+<div class="absolute right-sm top-1/2 -translate-y-1/2 text-on-surface-variant text-xs border border-outline-variant rounded px-1 bg-surface-container-low">⌘K</div>
+</div>
+<button class="bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary px-md py-sm rounded-lg font-label-md text-label-md transition-colors active:scale-95 duration-150" onclick="document.getElementById('addChemicalModal').classList.remove('hidden')">Add Chemical</button>
+<button class="border border-outline-variant text-on-surface hover:bg-surface-container-low px-md py-sm rounded-lg font-label-md text-label-md transition-colors active:scale-95 duration-150 hidden md:block">Export CSV</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-sm rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined">refresh</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-sm rounded-full transition-colors active:scale-95 duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</div>
+</header>
+<!-- Modal -->
+<div class="hidden fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4" id="addChemicalModal">
+<div class="bg-surface-container-lowest rounded-xl shadow-lg w-full max-w-lg p-lg border border-outline-variant relative">
+<button class="absolute top-md right-md text-on-surface-variant hover:bg-surface-container-low p-xs rounded-full transition-colors" onclick="document.getElementById('addChemicalModal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-md">Add Chemical</h2>
+<form class="flex flex-col gap-md" id="addChemicalForm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Inventory Number (Auto-assigned if empty)</label>
+<input class="w-full px-sm py-xs border border-outline-variant rounded-lg bg-surface focus:ring-2 focus:ring-primary focus:border-primary text-body-md font-body-md" id="invNumber" placeholder="e.g. Bsc0801-123" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">Chemical Name *</label>
+<input class="w-full px-sm py-xs border border-outline-variant rounded-lg bg-surface focus:ring-2 focus:ring-primary focus:border-primary text-body-md font-body-md" id="chemName" placeholder="e.g. Acetone" required="" type="text"/>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-xs">CAS Number</label>
+<input class="w-full px-sm py-xs border border-outline-variant rounded-lg bg-surface focus:ring-2 focus:ring-primary focus:border-primary text-body-md font-body-md" id="casNumber" placeholder="e.g. 67-64-1" type="text"/>
+</div>
+<div class="flex justify-end gap-sm mt-md">
+<button class="border border-outline-variant text-on-surface hover:bg-surface-container-low px-md py-sm rounded-lg font-label-md text-label-md transition-colors" onclick="document.getElementById('addChemicalModal').classList.add('hidden')" type="button">Cancel</button>
+<button class="bg-primary text-on-primary hover:bg-primary/90 px-md py-sm rounded-lg font-label-md text-label-md transition-colors" type="submit">Add</button>
+</div>
+</form>
+</div>
+</div>
+<div class="flex flex-1 max-w-[1440px] w-full mx-auto">
+<!-- Side Navigation (Mobile Hidden) -->
+<aside class="hidden md:flex flex-col h-[calc(100vh-64px)] w-[280px] bg-surface-container-low dark:bg-surface-container-lowest border-r border-outline-variant py-lg gap-sm sticky top-16 shrink-0">
+<div class="px-md mb-md">
+<div class="font-headline-sm text-headline-sm font-bold text-primary mb-xs">BSc0801 Inventory</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Main Laboratory</div>
+</div>
+<a class="bg-secondary-container dark:bg-on-secondary-fixed-variant text-on-secondary-container dark:text-secondary-fixed rounded-full mx-md px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">search</span> Search
+            </a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mx-md rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">science</span> Inventory
+            </a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mx-md rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">warning</span> Hazards
+            </a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mx-md rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all active:translate-x-1 duration-200" href="#">
+<span class="material-symbols-outlined">location_on</span> Locations
+            </a>
+<div class="mt-auto flex flex-col gap-sm">
+<div class="border-t border-outline-variant mx-md my-sm"></div>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mx-md rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined">security</span> Safety SDS
+                </a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high mx-md rounded-full px-md py-sm flex items-center gap-sm font-label-md text-label-md hover:bg-surface-container-highest transition-all" href="#">
+<span class="material-symbols-outlined">help_outline</span> Help
+                </a>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-md md:p-lg lg:p-xl overflow-y-auto">
+<!-- Hero Section -->
+<div class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
+<div>
+<div class="flex items-center gap-sm mb-xs">
+<h1 class="font-display-lg text-display-lg text-on-surface">Chemical Lookup</h1>
+<span class="bg-surface-container-high text-on-surface-variant font-label-md text-label-md px-2 py-1 rounded-full flex items-center gap-1 border border-outline-variant">
+<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Live data
+                        </span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">Search chemicals by name, synonym, CAS number, owner, manufacturer, or inventory number.</p>
+</div>
+</div>
+<!-- Dashboard Stats & Search/Filter Container (Bento Layout) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
+<!-- Main Search Area -->
+<div class="lg:col-span-8 bg-surface-container-lowest p-lg rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center">
+<div class="relative w-full mb-md">
+<span class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-on-surface-variant text-2xl">search</span>
+<input class="w-full pl-xl pr-md py-md text-body-lg font-body-lg border border-outline-variant rounded-lg bg-surface focus:ring-2 focus:ring-primary focus:border-primary transition-all shadow-inner" placeholder="Enter chemical name, CAS, etc..." type="text"/>
+</div>
+<div class="flex flex-wrap gap-sm">
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low font-label-md text-label-md text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">category</span> Category
+                        </button>
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low font-label-md text-label-md text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">inventory_2</span> Storage
+                        </button>
+<button class="flex items-center gap-xs px-md py-sm rounded-lg border border-outline-variant bg-surface hover:bg-surface-container-low font-label-md text-label-md text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined text-[18px]">person</span> Owner
+                        </button>
+</div>
+</div>
+<!-- Stats Cards -->
+<div class="lg:col-span-4 grid grid-cols-2 gap-md">
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center hover:bg-surface-container-low transition-colors cursor-default">
+<span class="material-symbols-outlined text-primary mb-xs text-3xl">science</span>
+<div class="font-headline-md text-headline-md text-on-surface">1,240</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Chemicals</div>
+</div>
+<div class="bg-surface-container-lowest p-md rounded-xl border border-outline-variant shadow-sm flex flex-col justify-center items-center text-center hover:bg-surface-container-low transition-colors cursor-default">
+<span class="material-symbols-outlined text-tertiary mb-xs text-3xl">location_city</span>
+<div class="font-headline-md text-headline-md text-on-surface">12</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant">Storage Locations</div>
+</div>
+</div>
+</div>
+<!-- Results Panel -->
+<div class="mb-lg flex justify-between items-center">
+<div class="flex items-center gap-md">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Results</h2>
+<span class="bg-secondary-container text-on-secondary-container font-label-md text-label-md px-sm py-xs rounded-full">120 shown</span>
+</div>
+</div>
+<!-- Results List -->
+<div class="flex flex-col gap-sm" id="resultsList">
+<!-- Expanded Item (Simulated State) -->
+<div class="bg-surface-container-lowest border-2 border-primary rounded-xl shadow-md overflow-hidden transition-all relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+<div class="p-md md:p-lg flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-outline-variant bg-primary-fixed/20">
+<div class="flex-1">
+<div class="flex items-baseline gap-sm mb-xs">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Acetone</h3>
+<span class="font-code-data text-code-data text-on-surface-variant bg-surface-container-high px-xs rounded">CAS: 67-64-1</span>
+<span class="font-label-md text-label-md text-secondary ml-auto md:ml-0 bg-secondary-fixed px-xs rounded">3 Variants</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Synonyms: 2-Propanone, Dimethyl ketone</p>
+<div class="flex flex-wrap gap-sm">
+<span class="font-label-md text-label-md bg-amber-50 text-amber-800 border border-amber-200 px-sm py-xs rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> Flammable
+                                </span>
+<span class="font-label-md text-label-md bg-surface-container-high text-on-surface px-sm py-xs rounded-full">
+                                    Solvent
+                                </span>
+<span class="font-label-md text-label-md bg-slate-100 text-slate-700 border border-slate-200 px-sm py-xs rounded-full">
+                                    Chem Storage 1
+                                </span>
+</div>
+</div>
+<div class="shrink-0 flex gap-sm">
+<button class="bg-surface-container-high text-on-surface hover:bg-surface-container-highest p-sm rounded-lg transition-colors" title="View SDS">
+<span class="material-symbols-outlined">description</span>
+</button>
+<button class="text-on-surface-variant p-sm transition-transform rotate-180">
+<span class="material-symbols-outlined">expand_more</span>
+</button>
+</div>
+</div>
+<!-- Expanded Detail Table -->
+<div class="bg-surface p-md overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant">
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant">Number</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant">Grade</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant">Manufacturer</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant text-right">Remain</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant">Owner</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant">Specific Storage</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface">
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-sm px-md font-code-data text-code-data chem-number">ACE-001</td>
+<td class="py-sm px-md">HPLC Grade</td>
+<td class="py-sm px-md">Sigma-Aldrich</td>
+<td class="py-sm px-md text-right font-code-data text-code-data">2.5 L</td>
+<td class="py-sm px-md">Dr. Smith</td>
+<td class="py-sm px-md text-on-surface-variant">Cabinet A, Shelf 2</td>
+</tr>
+<tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors">
+<td class="py-sm px-md font-code-data text-code-data chem-number">ACE-002</td>
+<td class="py-sm px-md">Technical</td>
+<td class="py-sm px-md">Fisher Sci</td>
+<td class="py-sm px-md text-right font-code-data text-code-data">500 mL</td>
+<td class="py-sm px-md">Lab General</td>
+<td class="py-sm px-md text-on-surface-variant">Under Fume Hood 1</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-sm px-md font-code-data text-code-data chem-number">ACE-003</td>
+<td class="py-sm px-md">ACS Reagent</td>
+<td class="py-sm px-md">VWR</td>
+<td class="py-sm px-md text-right font-code-data text-code-data text-error font-bold">50 mL</td>
+<td class="py-sm px-md">J. Doe</td>
+<td class="py-sm px-md text-on-surface-variant">Cabinet B, Shelf 1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Collapsed Item -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-lg flex flex-col md:flex-row md:items-center justify-between gap-md hover:shadow-sm hover:border-outline transition-all cursor-pointer group">
+<div class="flex-1">
+<div class="flex items-baseline gap-sm mb-xs">
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">Hydrochloric Acid</h3>
+<span class="font-code-data text-code-data text-on-surface-variant bg-surface-container-high px-xs rounded">CAS: 7647-01-0</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Synonyms: Muriatic acid, spirits of salt</p>
+<div class="flex flex-wrap gap-sm">
+<span class="font-label-md text-label-md bg-red-50 text-red-800 border border-red-200 px-sm py-xs rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span> Danger
+                            </span>
+<span class="font-label-md text-label-md bg-pink-50 text-pink-800 border border-pink-200 px-sm py-xs rounded-full">
+                                Acid
+                            </span>
+<span class="font-label-md text-label-md bg-slate-100 text-slate-700 border border-slate-200 px-sm py-xs rounded-full">
+                                Acid Cabinet 1
+                            </span>
+</div>
+</div>
+<div class="shrink-0 flex items-center gap-md">
+<span class="font-label-md text-label-md text-secondary bg-secondary-fixed px-sm py-xs rounded">1 Variant</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+<!-- Collapsed Item -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-lg flex flex-col md:flex-row md:items-center justify-between gap-md hover:shadow-sm hover:border-outline transition-all cursor-pointer group">
+<div class="flex-1">
+<div class="flex items-baseline gap-sm mb-xs">
+<h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">Sodium Chloride</h3>
+<span class="font-code-data text-code-data text-on-surface-variant bg-surface-container-high px-xs rounded">CAS: 7647-14-5</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Synonyms: Table salt, Halite</p>
+<div class="flex flex-wrap gap-sm">
+<span class="font-label-md text-label-md bg-green-50 text-green-800 border border-green-200 px-sm py-xs rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span> Safe
+                            </span>
+<span class="font-label-md text-label-md bg-surface-container-high text-on-surface px-sm py-xs rounded-full">
+                                Salt
+                            </span>
+<span class="font-label-md text-label-md bg-slate-100 text-slate-700 border border-slate-200 px-sm py-xs rounded-full">
+                                General Shelving
+                            </span>
+</div>
+</div>
+<div class="shrink-0 flex items-center gap-md">
+<span class="font-label-md text-label-md text-secondary bg-secondary-fixed px-sm py-xs rounded">4 Variants</span>
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Footer Meta -->
+<footer class="mt-xl pt-lg border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-md font-body-sm text-body-sm text-on-surface-variant">
+<div class="">Data synced from Main Inventory DB (Last update: 5 mins ago)</div>
+<div class="">Results grouped by CAS Registry Number.</div>
+</footer>
+</main>
+</div>
+<script>
+    // Placeholder for actual App Script URL
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby_U9i-hTHQZl2xCQ1u0DEeUAYsbHm2o64mQrmPdHilhnbBTPjJR1MIeEs87dwJ3F-V/exec';
 
-    <section class="toolbar-card" aria-label="Search and filters">
-      <div class="search-row">
-        <div class="search-wrap">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
-          </svg>
-          <input id="q" class="search-input" placeholder="Search name, CAS, synonym, manufacturer, owner, or inventory number" autocomplete="off" spellcheck="false" />
-          <button class="clear-search" id="clearSearch" type="button" aria-label="Clear search">×</button>
-        </div>
-      </div>
+    function getNextId() {
+        // Collect all existing chemical numbers from the DOM
+        const numberElements = document.querySelectorAll('.chem-number');
+        let maxNumber = 0;
 
-      <div class="filter-row">
-        <div class="field">
-          <label class="label" for="categoryFilter">Category</label>
-          <select class="select" id="categoryFilter"><option value="">All categories</option></select>
-        </div>
-        <div class="field">
-          <label class="label" for="storageFilter">Storage</label>
-          <select class="select" id="storageFilter"><option value="">All storage</option></select>
-        </div>
-        <div class="field">
-          <label class="label" for="ownerFilter">Owner</label>
-          <select class="select" id="ownerFilter"><option value="">All owners</option></select>
-        </div>
-        <button class="button" id="resetFilters" type="button">Clear filters</button>
-      </div>
-    </section>
+        numberElements.forEach(el => {
+            const text = el.textContent.trim();
+            // Look for pattern Bsc0801-XXX
+            const match = text.match(/Bsc0801-(\d+)/i);
+            if (match) {
+                const num = parseInt(match[1], 10);
+                if (num > maxNumber) {
+                    maxNumber = num;
+                }
+            }
+        });
 
-    <section class="add-card" id="addPanel" hidden aria-label="Add chemical form">
-      <div class="add-card-head">
-        <div class="summary-title">
-          <strong>Add chemical</strong>
-          <span>Fill in the fields below. A draft preview appears in the results immediately, then becomes a saved record after you press Add to lookup.</span>
-        </div>
-        <div class="add-card-head-actions">
-          <span class="count-pill" id="draftStatus">No draft</span>
-          <button class="button" id="closeAddPanel" type="button">Close</button>
-        </div>
-      </div>
-      <form id="addForm" class="add-form" autocomplete="off">
-        <div class="form-note">When connected to Apps Script, this form adds records directly to the shared Google Sheet. Without Apps Script, records are stored only in this browser and can be exported as CSV.</div>
-        <div class="add-grid">
-          <div class="field">
-            <label class="label" for="addNumber">Inventory number</label>
-            <input class="form-input" id="addNumber" data-col="Number" placeholder="Auto, if empty" />
-          </div>
-          <div class="field wide">
-            <label class="label" for="addName">Chemical name *</label>
-            <input class="form-input" id="addName" data-col="Name" required placeholder="e.g., Sodium chloride" />
-          </div>
-          <div class="field">
-            <label class="label" for="addCas">CAS number</label>
-            <input class="form-input" id="addCas" data-col="CAS number" placeholder="e.g., 7647-14-5" />
-          </div>
-
-          <div class="field wide">
-            <label class="label" for="addOtherNames">Other names</label>
-            <textarea class="form-textarea" id="addOtherNames" data-col="Other names" placeholder="Separate synonyms with semicolons"></textarea>
-          </div>
-          <div class="field">
-            <label class="label" for="addGrade">Grade</label>
-            <input class="form-input" id="addGrade" data-col="Grade" placeholder="AR, ACS, HPLC, etc." />
-          </div>
-          <div class="field">
-            <label class="label" for="addManufacturer">Manufacturer</label>
-            <input class="form-input" id="addManufacturer" data-col="Manufacturer" />
-          </div>
-
-          <div class="field">
-            <label class="label" for="addProductSize">Product size</label>
-            <input class="form-input" id="addProductSize" data-col="Product Size" type="number" step="any" />
-          </div>
-          <div class="field">
-            <label class="label" for="addProductUnit">Product unit</label>
-            <input class="form-input" id="addProductUnit" data-col="Product size unit" list="unitOptions" placeholder="mL, L, g, kg" />
-          </div>
-          <div class="field">
-            <label class="label" for="addRemain">Amount remain</label>
-            <input class="form-input" id="addRemain" data-col="Amount remain" type="number" step="any" />
-          </div>
-          <div class="field">
-            <label class="label" for="addRemainUnit">Remain unit</label>
-            <input class="form-input" id="addRemainUnit" data-col="Amount remain unit" list="unitOptions" placeholder="mL, L, g, kg" />
-          </div>
-
-          <div class="field">
-            <label class="label" for="addCategory">Category</label>
-            <input class="form-input" id="addCategory" data-col="Category" list="categoryOptions" placeholder="Acid, Base, Flammable, etc." />
-          </div>
-          <div class="field">
-            <label class="label" for="addStorage">Storage</label>
-            <input class="form-input" id="addStorage" data-col="Storage" list="storageOptions" placeholder="Chemical storage 1" />
-          </div>
-          <div class="field">
-            <label class="label" for="addOwner">Owner</label>
-            <input class="form-input" id="addOwner" data-col="Owner" list="ownerOptions" placeholder="Central Stock" />
-          </div>
-          <div class="field">
-            <label class="label" for="addGhs">GHS signal word</label>
-            <input class="form-input" id="addGhs" data-col="GHS: Signal Word" list="ghsOptions" placeholder="Danger, Warning, or blank" />
-          </div>
-
-          <div class="field">
-            <label class="label" for="addOpenDate">Open date</label>
-            <input class="form-input" id="addOpenDate" data-col="Open date" type="date" />
-          </div>
-          <div class="field">
-            <label class="label" for="addCheckDate">Check date</label>
-            <input class="form-input" id="addCheckDate" data-col="Check date" type="date" />
-          </div>
-          <div class="field">
-            <label class="label" for="addReceiveDate">Receive date</label>
-            <input class="form-input" id="addReceiveDate" data-col="Receive Date" type="date" />
-          </div>
-          <div class="field">
-            <label class="label" for="addExpireDate">Expire date</label>
-            <input class="form-input" id="addExpireDate" data-col="Expire Date" type="date" />
-          </div>
-
-          <div class="field wide">
-            <label class="label" for="addSds">SDS link</label>
-            <input class="form-input" id="addSds" data-col="SDS" placeholder="docs/file.pdf or https://..." />
-          </div>
-          <div class="field">
-            <label class="label" for="addSdsVersion">SDS version</label>
-            <input class="form-input" id="addSdsVersion" data-col="SDS version" />
-          </div>
-          <div class="field">
-            <label class="label" for="addPrice">Price</label>
-            <input class="form-input" id="addPrice" data-col="Price" type="number" step="any" />
-          </div>
-        </div>
-
-        <div class="form-actions">
-          <div class="form-note" id="addHint">Start typing to preview the new record in the result list.</div>
-          <div class="form-action-buttons">
-            <button class="button success" id="addChemical" type="submit">Add to lookup</button>
-            <button class="button" id="clearAddForm" type="button">Clear form</button>
-            <button class="button primary" id="exportCsvForm" type="button">Export CSV</button>
-            <button class="button danger-soft" id="clearLocalRows" type="button" title="Remove only records added in this browser">Clear browser-added records</button>
-          </div>
-        </div>
-      </form>
-    </section>
-
-    <datalist id="categoryOptions"></datalist>
-    <datalist id="storageOptions"></datalist>
-    <datalist id="ownerOptions"></datalist>
-    <datalist id="ghsOptions"></datalist>
-    <datalist id="unitOptions">
-      <option value="mL"></option>
-      <option value="L"></option>
-      <option value="g"></option>
-      <option value="kg"></option>
-      <option value="mg"></option>
-    </datalist>
-
-
-    <section class="dashboard" aria-label="Inventory summary">
-      <div class="stat-card"><div class="stat-label">Chemicals</div><div class="stat-value" id="statChemicals">0</div></div>
-      <div class="stat-card"><div class="stat-label">Storage locations</div><div class="stat-value" id="statStorage">0</div></div>
-    </section>
-
-    <section class="content-grid">
-      <section class="panel" aria-label="Search results">
-        <div class="panel-head">
-          <div class="panel-title">Results</div>
-          <div class="count-pill"><span id="count">0</span> shown</div>
-        </div>
-        <div class="results-list" id="list"></div>
-      </section>
-    </section>
-
-    <div class="footer-meta">
-      <span>Data source, Google Sheet via Apps Script, with CSV fallback at <code>data/chemical_list0801_20251113.csv</code></span>
-      <span>Grouped by Name + CAS number</span>
-    </div>
-  </main>
-
-  <div class="toast" id="toast">Copied</div>
-
-  <script>
-    const CSV_PATH = "data/chemical_list0801_20251113.csv";
-    const GOOGLE_SHEET_ID = "1eySq7rlTsXHe3AjTTTrCQ3hCCw95bDxFTAXOhdbGcyk";
-
-    /*
-      Paste your deployed Apps Script Web App URL below after you deploy Code.gs.
-      Keep it blank while testing from the included CSV.
-      Example: const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_U9i-hTHQZl2xCQ1u0DEeUAYsbHm2o64mQrmPdHilhnbBTPjJR1MIeEs87dwJ3F-V/exec";
-    */
-    const APPS_SCRIPT_URL = "";
-    const REMOTE_REFRESH_MS = 30000;
-
-    const COLUMNS = [
-      "Number", "Name", "Other names", "CAS number", "CAS number search", "Grade", "Manufacturer", "Open date",
-      "Product Size", "Product size unit", "Amount remain", "Amount remain unit", "Check date", "Owner",
-      "Category", "Storage", "SDS", "SDS version", "GHS: Signal Word", "Receive Date", "Expire Date", "Price"
-    ];
-    const LOCAL_STORAGE_KEY = "bsc0801_chemical_lookup_added_records_v3";
-
-    const storageColors = {
-      "Chemical storage 1": "var(--storage1)",
-      "Chemical storage 2": "var(--storage2)",
-      "Chemical storage 3": "var(--storage3)",
-      "Owner's shelf": "var(--ownershelf)",
-      "Refrigerator": "var(--refrigerator)"
-    };
-
-    const categoryColors = {
-      "Acid": "#ef4444",
-      "Base": "#f59e0b",
-      "Neutral": "#10b981",
-      "Flammable": "#FF4900",
-      "Oxidizer": "#f472b6",
-      "Detergent/Organic": "#60a5fa"
-    };
-
-    const norm = s => (s ?? "").toString().trim();
-    const lower = s => norm(s).toLowerCase();
-    const dehyphen = s => lower(s).replace(/-/g, "");
-    const splitSyn = s => norm(s).split(/[;]+/).map(x => x.trim()).filter(Boolean);
-    const pluck = (o, k) => (!o || !(k in o) || o[k] == null) ? "" : String(o[k]).trim();
-    const num = value => {
-      const parsed = parseFloat(norm(value).replace(/,/g, ""));
-      return Number.isFinite(parsed) ? parsed : 0;
-    };
-
-
-    function normalizeRow(row) {
-      const clean = {};
-      COLUMNS.forEach(col => { clean[col] = pluck(row, col); });
-      clean["CAS number search"] = clean["CAS number search"] || dehyphen(clean["CAS number"]);
-      return clean;
+        // Generate next sequence
+        const nextNum = maxNumber + 1;
+        // Pad with zeros to 3 digits
+        const paddedNum = nextNum.toString().padStart(3, '0');
+        return `Bsc0801-${paddedNum}`;
     }
 
-    function loadLocalRows() {
-      try {
-        const parsed = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY) || "[]");
-        return Array.isArray(parsed) ? parsed.map(normalizeRow) : [];
-      } catch (err) {
-        console.warn("Could not load locally added records", err);
-        return [];
-      }
-    }
+    document.getElementById('addChemicalForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        let invNumber = document.getElementById('invNumber').value.trim();
+        const chemName = document.getElementById('chemName').value.trim();
+        const casNumber = document.getElementById('casNumber').value.trim();
 
-    function saveLocalRows() {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(LOCAL_ROWS.map(normalizeRow)));
-    }
-
-    const els = {
-      q: document.getElementById("q"),
-      clearSearch: document.getElementById("clearSearch"),
-      categoryFilter: document.getElementById("categoryFilter"),
-      storageFilter: document.getElementById("storageFilter"),
-      ownerFilter: document.getElementById("ownerFilter"),
-      resetFilters: document.getElementById("resetFilters"),
-      resetAllTop: document.getElementById("resetAllTop"),
-      exportCsvTop: document.getElementById("exportCsvTop"),
-      openAddPanel: document.getElementById("openAddPanel"),
-      closeAddPanel: document.getElementById("closeAddPanel"),
-      addPanel: document.getElementById("addPanel"),
-      addForm: document.getElementById("addForm"),
-      addChemical: document.getElementById("addChemical"),
-      clearAddForm: document.getElementById("clearAddForm"),
-      exportCsvForm: document.getElementById("exportCsvForm"),
-      clearLocalRows: document.getElementById("clearLocalRows"),
-      addHint: document.getElementById("addHint"),
-      draftStatus: document.getElementById("draftStatus"),
-      list: document.getElementById("list"),
-      count: document.getElementById("count"),
-      statusText: document.getElementById("statusText"),
-      statusDot: document.getElementById("statusDot"),
-      statChemicals: document.getElementById("statChemicals"),
-      statVariants: document.getElementById("statVariants"),
-      statStorage: document.getElementById("statStorage"),
-      statDanger: document.getElementById("statDanger"),
-      toast: document.getElementById("toast")
-    };
-
-    let RAW = [];
-    let GROUPS = [];
-    let QUERY = "";
-    let selectedKey = "";
-    let LOCAL_ROWS = [];
-    let DRAFT_ROW = null;
-    let REMOTE_REFRESH_TIMER = null;
-
-    function groupKey(row) {
-      return `${lower(pluck(row, "Name"))}||${lower(pluck(row, "CAS number"))}`;
-    }
-
-    function rankScore(q, group) {
-      const nq = lower(q);
-      if (!nq) return 1;
-      const casCompact = dehyphen(group.cas || "");
-      const qCompact = nq.replace(/-/g, "");
-      const name = lower(group.name);
-      const syns = group.synonymsLower;
-
-      if (name === nq) return 1200;
-      if (name.startsWith(nq)) return 1000 - name.length;
-      if (syns.some(s => s === nq)) return 930;
-      if (syns.some(s => s.startsWith(nq))) return 900;
-      if (casCompact === qCompact) return 880;
-      if (casCompact.startsWith(qCompact)) return 820;
-      if (name.includes(nq)) return 720;
-      if (syns.some(s => s.includes(nq))) return 660;
-      if (group.searchBlob.includes(nq) || group.searchBlobCompact.includes(qCompact)) return 430;
-      return 0;
-    }
-
-    function highlight(text, q) {
-      const t = String(text ?? "");
-      const query = String(q ?? "").trim();
-      if (!query) return escapeHtml(t);
-      const idx = t.toLowerCase().indexOf(query.toLowerCase());
-      if (idx < 0) return escapeHtml(t);
-      return escapeHtml(t.slice(0, idx)) + "<mark>" + escapeHtml(t.slice(idx, idx + query.length)) + "</mark>" + escapeHtml(t.slice(idx + query.length));
-    }
-
-    function escapeHtml(text) {
-      return String(text ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function badge(text, color, extraClass = "") {
-      const safe = escapeHtml(text || "Not provided");
-      const bg = color || "rgba(148, 163, 184, 0.16)";
-      return `<span class="badge ${extraClass}" style="background:${bg}">${safe}</span>`;
-    }
-
-    function ghsColor(word) {
-      const w = lower(word);
-      if (w.includes("danger")) return "var(--danger)";
-      if (w.includes("warning")) return "var(--warning)";
-      return "#64748b";
-    }
-
-    function strongestGhs(words) {
-      const clean = words.filter(Boolean);
-      if (!clean.length) return "";
-      return clean.find(w => /danger/i.test(w)) || clean.find(w => /warning/i.test(w)) || clean[0];
-    }
-
-    function totalsByUnit(variants, amountKey, unitKey) {
-      const agg = new Map();
-      for (const v of variants) {
-        const unit = pluck(v, unitKey);
-        const amount = num(pluck(v, amountKey));
-        if (!unit || !amount) continue;
-        agg.set(unit, (agg.get(unit) || 0) + amount);
-      }
-      return Array.from(agg.entries()).map(([unit, total]) => ({ unit, total }));
-    }
-
-    function buildGroups(rows) {
-      const map = new Map();
-      for (const r of rows) {
-        const k = groupKey(r);
-        if (!map.has(k)) {
-          map.set(k, {
-            key: k,
-            name: pluck(r, "Name"),
-            cas: pluck(r, "CAS number"),
-            variants: [],
-            synonyms: [],
-            synonymsLower: [],
-            storageSet: new Set(),
-            categorySet: new Set(),
-            ownerSet: new Set(),
-            ghsSet: new Set(),
-            searchBlob: "",
-            searchBlobCompact: "",
-            totalNumericAmount: 0
-          });
-        }
-        map.get(k).variants.push(r);
-      }
-
-      for (const g of map.values()) {
-        const syn = new Set();
-        const stor = new Set();
-        const cat = new Set();
-        const own = new Set();
-        const ghs = new Set();
-        let blob = [g.name, g.cas].join(" ");
-        let compact = dehyphen(g.cas || "");
-        let totalAmount = 0;
-
-        for (const v of g.variants) {
-          splitSyn(pluck(v, "Other names")).forEach(s => syn.add(s));
-          const st = pluck(v, "Storage"); if (st) stor.add(st);
-          const ca = pluck(v, "Category"); if (ca) cat.add(ca);
-          const ow = pluck(v, "Owner"); if (ow) own.add(ow);
-          const gw = pluck(v, "GHS: Signal Word"); if (gw) ghs.add(gw);
-          totalAmount += num(pluck(v, "Amount remain"));
-          blob += " " + [
-            pluck(v, "Number"),
-            pluck(v, "CAS number search"),
-            pluck(v, "Manufacturer"),
-            pluck(v, "Category"),
-            pluck(v, "Owner"),
-            pluck(v, "Storage"),
-            pluck(v, "Grade"),
-            pluck(v, "GHS: Signal Word")
-          ].join(" ");
-          compact += " " + dehyphen(pluck(v, "CAS number search"));
+        // Assign generated ID if empty
+        if (!invNumber) {
+            invNumber = getNextId();
         }
 
-        g.synonyms = Array.from(syn).sort((a, b) => a.localeCompare(b));
-        g.synonymsLower = g.synonyms.map(s => s.toLowerCase());
-        g.storageSet = stor;
-        g.categorySet = cat;
-        g.ownerSet = own;
-        g.ghsSet = ghs;
-        g.searchBlob = lower(blob);
-        g.searchBlobCompact = compact;
-        g.totalNumericAmount = totalAmount;
-      }
+        const newChemical = {
+            id: invNumber,
+            name: chemName,
+            cas: casNumber
+        };
 
-      return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name) || (a.cas || "").localeCompare(b.cas || ""));
-    }
-
-    function populateFilters(groups) {
-      fillSelect(els.categoryFilter, "All categories", uniqueFrom(groups, "categorySet"));
-      fillSelect(els.storageFilter, "All storage", uniqueFrom(groups, "storageSet"));
-      fillSelect(els.ownerFilter, "All owners", uniqueFrom(groups, "ownerSet"));
-    }
-
-    function uniqueFrom(groups, setName) {
-      const values = new Set();
-      groups.forEach(g => Array.from(g[setName] || []).forEach(v => values.add(v)));
-      return Array.from(values).filter(Boolean).sort((a, b) => a.localeCompare(b));
-    }
-
-    function fillSelect(select, placeholder, values) {
-      select.innerHTML = `<option value="">${escapeHtml(placeholder)}</option>` + values.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
-    }
-
-    function currentFilteredGroups() {
-      const category = els.categoryFilter.value;
-      const storage = els.storageFilter.value;
-      const owner = els.ownerFilter.value;
-      const allGroups = DRAFT_ROW ? buildGroups([...RAW, DRAFT_ROW]) : GROUPS;
-      const scored = allGroups.map(g => ({ g, score: rankScore(QUERY, g) })).filter(x => x.score > 0);
-
-      let filtered = scored.filter(({ g }) => {
-        const isDraft = g.variants.some(v => v.__draft === "true");
-        if (isDraft) return true;
-        const categoryOk = !category || g.categorySet.has(category);
-        const storageOk = !storage || g.storageSet.has(storage);
-        const ownerOk = !owner || g.ownerSet.has(owner);
-        return categoryOk && storageOk && ownerOk;
-      });
-
-      filtered.sort((a, b) => {
-        const ad = a.g.variants.some(v => v.__draft === "true") ? 1 : 0;
-        const bd = b.g.variants.some(v => v.__draft === "true") ? 1 : 0;
-        if (ad !== bd) return bd - ad;
-        return b.score - a.score || a.g.name.localeCompare(b.g.name) || (a.g.cas || "").localeCompare(b.g.cas || "");
-      });
-
-      return filtered.map(x => x.g);
-    }
-
-    function render() {
-      const filtered = currentFilteredGroups();
-      els.count.textContent = String(filtered.length);
-
-      if (!filtered.length) {
-        selectedKey = "";
-        renderEmpty("No matching records", "Try removing a filter or using a shorter search term.");
-        return;
-      }
-
-      const capped = filtered.slice(0, 600);
-      if (selectedKey && !capped.some(g => g.key === selectedKey)) selectedKey = "";
-      renderList(capped);
-    }
-
-    function renderList(groups) {
-      els.list.innerHTML = "";
-      if (!groups.length) return;
-
-      for (const group of groups) {
-        const card = document.createElement("div");
-        card.className = "result-card";
-        card.dataset.key = group.key;
-
-        const row = document.createElement("button");
-        row.type = "button";
-        row.className = "result-row";
-        row.dataset.key = group.key;
-        row.setAttribute("aria-expanded", group.key === selectedKey ? "true" : "false");
-
-        const storageBadges = Array.from(group.storageSet).slice(0, 3).map(storage => badge(storage, storageColors[storage] || "var(--accent)")).join("");
-        const categoryBadges = Array.from(group.categorySet).slice(0, 2).map(cat => badge(cat, categoryColors[cat] || "var(--success)")).join("");
-        const signal = strongestGhs(Array.from(group.ghsSet));
-        const ghsBadge = signal ? badge(signal, ghsColor(signal)) : "";
-        const draftBadge = group.variants.some(v => v.__draft === "true") ? badge("Draft preview", "var(--accent-2)") : "";
-        const synonyms = group.synonyms.join("; ");
-
-        row.innerHTML = `
-          <div class="result-name">${highlight(group.name || "Unnamed chemical", QUERY)}</div>
-          <div class="result-meta">CAS, ${group.cas ? highlight(group.cas, QUERY) : "<span class='muted'>not provided</span>"} · ${group.variants.length} variant${group.variants.length > 1 ? "s" : ""}</div>
-          <div class="result-synonyms">${synonyms ? highlight(synonyms, QUERY) : "Other names not provided"}</div>
-          <div class="badge-line">${draftBadge}${storageBadges}${categoryBadges}${ghsBadge}</div>
+        // 1. Optimistic UI Update (Simplified for example)
+        const resultsList = document.getElementById('resultsList');
+        const newItemHTML = `
+            <div class="bg-surface-container-lowest border border-outline-variant rounded-xl p-md md:p-lg flex flex-col md:flex-row md:items-center justify-between gap-md hover:shadow-sm hover:border-outline transition-all cursor-pointer group">
+                <div class="flex-1">
+                    <div class="flex items-baseline gap-sm mb-xs">
+                        <h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">${newChemical.name}</h3>
+                        <span class="font-code-data text-code-data text-on-surface-variant bg-surface-container-high px-xs rounded">CAS: ${newChemical.cas || 'N/A'}</span>
+                    </div>
+                    <p class="font-body-sm text-body-sm text-on-surface-variant mb-md">Inventory No: <span class="chem-number font-code-data">${newChemical.id}</span> (Pending Sync...)</p>
+                </div>
+            </div>
         `;
-        row.addEventListener("click", () => {
-          selectedKey = selectedKey === group.key ? "" : group.key;
-          render();
-        });
+        resultsList.insertAdjacentHTML('afterbegin', newItemHTML);
+        
+        // Reset form and close modal
+        this.reset();
+        document.getElementById('addChemicalModal').classList.add('hidden');
 
-        card.appendChild(row);
-
-        if (group.key === selectedKey) {
-          row.classList.add("active");
-          const detail = document.createElement("div");
-          detail.className = "inline-detail";
-          detail.innerHTML = detailMarkup(group);
-          card.appendChild(detail);
-          attachCopyHandlers(detail);
+        // 2. Attempt Sync (Simulated if no URL)
+        if (APPS_SCRIPT_URL && APPS_SCRIPT_URL !== 'https://script.google.com/macros/s/AKfycby_U9i-hTHQZl2xCQ1u0DEeUAYsbHm2o64mQrmPdHilhnbBTPjJR1MIeEs87dwJ3F-V/exec') {
+            fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(newChemical)
+            }).then(response => {
+                if(response.ok) {
+                    console.log('Successfully synced to sheets');
+                    // Update UI to remove "Pending Sync"
+                } else {
+                    console.error('Failed to sync');
+                    // Handle error UI
+                }
+            }).catch(err => {
+                console.error('Error syncing:', err);
+                 // Handle error UI
+            });
+        } else {
+             console.log('No APPS_SCRIPT_URL provided. Simulated sync complete for:', newChemical);
         }
-
-        els.list.appendChild(card);
-      }
-    }
-
-    function markActiveRow() {
-      document.querySelectorAll(".result-row").forEach(row => {
-        row.classList.toggle("active", row.dataset.key === selectedKey);
-      });
-    }
-
-    function detailMarkup(group) {
-      const isDraft = group.variants.some(v => v.__draft === "true");
-      const storageBadges = Array.from(group.storageSet).map(storage => badge(storage, storageColors[storage] || "var(--accent)")).join("");
-      const categoryBadges = Array.from(group.categorySet).map(cat => badge(cat, categoryColors[cat] || "var(--success)")).join("");
-      const signal = strongestGhs(Array.from(group.ghsSet));
-      const ghsBadge = signal ? badge(signal, ghsColor(signal)) : badge("Signal word not provided", "#64748b");
-      const totals = totalsByUnit(group.variants, "Amount remain", "Amount remain unit").map(x => `${formatNumber(x.total)} ${escapeHtml(x.unit)}`).join(", ");
-      const owners = Array.from(group.ownerSet).join(", ");
-      const manufacturers = uniqueVariantValues(group.variants, "Manufacturer").join(", ");
-      const dates = dateRange(group.variants, "Expire Date");
-      const synonyms = group.synonyms.join("; ");
-
-      return `
-        <div class="detail-hero">
-          <div class="detail-topline">
-            <div>
-              <h2 class="detail-name">${highlight(group.name || "Unnamed chemical", QUERY)}</h2>
-              <div class="cas-line">
-                <span>CAS, ${group.cas ? highlight(group.cas, QUERY) : "not provided"}</span>
-                ${group.cas ? `<button class="copy-btn" type="button" data-copy="${escapeHtml(group.cas)}">Copy CAS</button>` : ""}
-              </div>
-            </div>
-            <div class="detail-actions">
-              ${ghsBadge}
-              ${categoryBadges}
-              ${storageBadges}
-            </div>
-          </div>
-        </div>
-
-        ${isDraft ? `<div class="draft-banner">Live draft preview, press Add to lookup to save this record.</div>` : ""}
-
-        <div class="info-grid">
-          <div class="info-card"><div class="k">Variants</div><div class="v">${group.variants.length}</div></div>
-          <div class="info-card"><div class="k">Total remaining</div><div class="v">${totals || "Not provided"}</div></div>
-          <div class="info-card"><div class="k">Owners</div><div class="v">${owners ? escapeHtml(owners) : "Not provided"}</div></div>
-          <div class="info-card"><div class="k">Storage</div><div class="v">${Array.from(group.storageSet).map(escapeHtml).join(", ") || "Not provided"}</div></div>
-          <div class="info-card"><div class="k">Manufacturers</div><div class="v">${manufacturers ? escapeHtml(manufacturers) : "Not provided"}</div></div>
-          <div class="info-card"><div class="k">Expire date range</div><div class="v">${dates || "Not provided"}</div></div>
-        </div>
-
-        <div class="detail-section">
-          <div class="section-title">Other names</div>
-          <div class="synonym-box">${synonyms ? highlight(synonyms, QUERY) : "Other names not provided"}</div>
-        </div>
-
-        <div class="detail-section">
-          <div class="section-title">Variants</div>
-          <div class="table-card">
-            <div class="table-scroll">
-              <table>
-                <thead>
-                  <tr>${variantHeaders().map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr>
-                </thead>
-                <tbody>${group.variants.map(renderVariantRow).join("")}</tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    function attachCopyHandlers(scope) {
-      scope.querySelectorAll("[data-copy]").forEach(button => {
-        button.addEventListener("click", () => copyText(button.getAttribute("data-copy")));
-      });
-    }
-
-    function showDetail(group) {
-      selectedKey = group.key;
-      render();
-    }
-
-    function renderEmpty(title, message) {
-      els.list.innerHTML = `
-        <div class="empty-state">
-          <div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
-              <circle cx="11" cy="11" r="7" stroke-width="2"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
-            </svg>
-            <div class="panel-title">${escapeHtml(title)}</div>
-            <p class="small">${escapeHtml(message)}</p>
-          </div>
-        </div>
-      `;
-    }
-
-    function variantHeaders() {
-      return [
-        "Number", "Grade", "Manufacturer", "Open date", "Product size", "Remain", "Check date",
-        "Owner", "Storage", "SDS", "SDS version", "GHS", "Receive date", "Expire date", "Price"
-      ];
-    }
-
-    function renderVariantRow(v) {
-      const productSize = [pluck(v, "Product Size"), pluck(v, "Product size unit")].filter(Boolean).join(" ");
-      const remain = [pluck(v, "Amount remain"), pluck(v, "Amount remain unit")].filter(Boolean).join(" ");
-      const ghs = pluck(v, "GHS: Signal Word");
-      const fields = [
-        pluck(v, "Number"),
-        pluck(v, "Grade"),
-        pluck(v, "Manufacturer"),
-        pluck(v, "Open date"),
-        productSize,
-        remain,
-        pluck(v, "Check date"),
-        pluck(v, "Owner"),
-        pluck(v, "Storage"),
-        linkify(pluck(v, "SDS")),
-        pluck(v, "SDS version"),
-        ghs ? badge(ghs, ghsColor(ghs)) : "",
-        pluck(v, "Receive Date"),
-        pluck(v, "Expire Date"),
-        pluck(v, "Price")
-      ];
-      return `<tr>${fields.map((field, idx) => idx === 9 || idx === 11 ? `<td>${field || "<span class='muted'>not provided</span>"}</td>` : `<td>${field ? escapeHtml(field) : "<span class='muted'>not provided</span>"}</td>`).join("")}</tr>`;
-    }
-
-    function linkify(url) {
-      const u = norm(url);
-      if (!u) return "";
-      const safeUrl = escapeHtml(u);
-      const isPDF = /\.pdf(\?|#|$)/i.test(u);
-      return `<a href="${safeUrl}" target="_blank" rel="noopener">Open${isPDF ? " PDF" : ""}</a>`;
-    }
-
-    function uniqueVariantValues(variants, key) {
-      return Array.from(new Set(variants.map(v => pluck(v, key)).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-    }
-
-    function dateRange(variants, key) {
-      const values = uniqueVariantValues(variants, key);
-      if (!values.length) return "";
-      if (values.length === 1) return escapeHtml(values[0]);
-      return `${escapeHtml(values[0])} to ${escapeHtml(values[values.length - 1])}`;
-    }
-
-    function formatNumber(value) {
-      return new Intl.NumberFormat(undefined, { maximumFractionDigits: 3 }).format(value);
-    }
-
-
-
-    function fillDatalist(id, values) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.innerHTML = values.map(v => `<option value="${escapeHtml(v)}"></option>`).join("");
-    }
-
-    function populateAddDatalists(groups) {
-      fillDatalist("categoryOptions", uniqueFrom(groups, "categorySet"));
-      fillDatalist("storageOptions", uniqueFrom(groups, "storageSet"));
-      fillDatalist("ownerOptions", uniqueFrom(groups, "ownerSet"));
-      const signalWords = uniqueFrom(groups, "ghsSet");
-      ["Danger", "Warning"].forEach(v => { if (!signalWords.includes(v)) signalWords.push(v); });
-      fillDatalist("ghsOptions", signalWords.sort((a, b) => a.localeCompare(b)));
-    }
-
-    function getFormInputs() {
-      return Array.from(els.addForm.querySelectorAll("[data-col]"));
-    }
-
-    function serializeAddForm() {
-      const row = {};
-      COLUMNS.forEach(col => row[col] = "");
-      getFormInputs().forEach(input => { row[input.dataset.col] = norm(input.value); });
-      row["CAS number search"] = dehyphen(row["CAS number"]);
-      return normalizeRow(row);
-    }
-
-    function formHasContent(row) {
-      return COLUMNS.some(col => col !== "CAS number search" && !!pluck(row, col));
-    }
-
-    function nextNumber() {
-      let max = 0;
-      RAW.forEach(row => {
-        const match = pluck(row, "Number").match(/(\d+)$/);
-        if (match) max = Math.max(max, Number(match[1]));
-      });
-      return `Bsc0801-${String(max + 1).padStart(3, "0")}`;
-    }
-
-    function updateDraftFromForm() {
-      const row = serializeAddForm();
-      if (!formHasContent(row)) {
-        DRAFT_ROW = null;
-        els.draftStatus.textContent = "No draft";
-        els.addHint.textContent = "Start typing to preview the new record in the result list.";
-        render();
-        return;
-      }
-      if (!row["Number"]) row["Number"] = nextNumber();
-      row.__draft = "true";
-      DRAFT_ROW = row;
-      selectedKey = groupKey(row);
-      els.draftStatus.textContent = row["Name"] ? "Previewing" : "Name needed";
-      els.addHint.textContent = row["Name"] ? "Draft preview is visible at the top of the result list." : "Chemical name is required before saving.";
-      render();
-    }
-
-    function clearAddForm() {
-      els.addForm.reset();
-      DRAFT_ROW = null;
-      els.draftStatus.textContent = "No draft";
-      els.addHint.textContent = "Start typing to preview the new record in the result list.";
-      render();
-    }
-
-    async function addChemicalFromForm() {
-      const row = serializeAddForm();
-      if (!formHasContent(row) || !row["Name"]) {
-        showToast("Chemical name is required");
-        return;
-      }
-      if (!row["Number"]) row["Number"] = nextNumber();
-      row["CAS number search"] = dehyphen(row["CAS number"]);
-      const clean = normalizeRow(row);
-
-      const previousButtonText = els.addChemical.textContent;
-      els.addChemical.disabled = true;
-      els.addChemical.textContent = hasAppsScript() ? "Adding to sheet..." : "Adding...";
-
-      if (hasAppsScript()) {
-        const optimisticKey = groupKey(clean);
-        RAW.push(clean);
-        GROUPS = buildGroups(RAW);
-        populateFilters(GROUPS);
-        populateAddDatalists(GROUPS);
-        updateStats();
-        selectedKey = optimisticKey;
-        render();
-
-        try {
-          await postRowToAppsScript(clean);
-          clearAddForm();
-          selectedKey = optimisticKey;
-          showToast("Added to Google Sheet");
-          window.setTimeout(() => loadData({ silent: true, keepSelection: true }), 1500);
-        } catch (err) {
-          RAW = RAW.filter(r => r !== clean);
-          rebuildFromRows(RAW, { keepSelection: false });
-          showToast("Could not add to sheet");
-          console.error(err);
-        } finally {
-          els.addChemical.disabled = false;
-          els.addChemical.textContent = previousButtonText;
-        }
-        return;
-      }
-
-      RAW.push(clean);
-      LOCAL_ROWS.push(clean);
-      saveLocalRows();
-      GROUPS = buildGroups(RAW);
-      populateFilters(GROUPS);
-      populateAddDatalists(GROUPS);
-      updateStats();
-      selectedKey = groupKey(clean);
-      clearAddForm();
-      selectedKey = groupKey(clean);
-      render();
-      setLoaded(true, `CSV fallback + ${LOCAL_ROWS.length} browser-added`);
-      showToast("Added to lookup");
-      els.addChemical.disabled = false;
-      els.addChemical.textContent = previousButtonText;
-    }
-
-    function exportCsv() {
-      const rows = RAW.map(normalizeRow);
-      const csv = Papa.unparse(rows, { columns: COLUMNS });
-      const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      link.href = url;
-      link.download = `chemical_list0801_updated_${stamp}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(url);
-      showToast("CSV exported");
-    }
-
-    function clearBrowserAddedRows() {
-      if (hasAppsScript()) {
-        showToast("Google Sheet mode uses the shared sheet");
-        return;
-      }
-      if (!LOCAL_ROWS.length) {
-        showToast("No browser-added records");
-        return;
-      }
-      const ok = confirm(`Remove ${LOCAL_ROWS.length} record${LOCAL_ROWS.length > 1 ? "s" : ""} added in this browser? This will not change the original CSV file.`);
-      if (!ok) return;
-      const localKeys = new Set(LOCAL_ROWS.map(row => JSON.stringify(normalizeRow(row))));
-      RAW = RAW.filter(row => !localKeys.has(JSON.stringify(normalizeRow(row))));
-      LOCAL_ROWS = [];
-      saveLocalRows();
-      rebuildFromRows(RAW, { keepSelection: false });
-      showToast("Browser-added records cleared");
-    }
-
-    function hasAppsScript() {
-      return /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec$/i.test(norm(APPS_SCRIPT_URL));
-    }
-
-    function rebuildFromRows(rows, options = {}) {
-      const keepSelection = options.keepSelection !== false;
-      const previousKey = selectedKey;
-      RAW = rows.map(normalizeRow);
-      GROUPS = buildGroups(RAW);
-      populateFilters(GROUPS);
-      populateAddDatalists(GROUPS);
-      updateStats();
-      if (!keepSelection) selectedKey = "";
-      else selectedKey = previousKey;
-      render();
-    }
-
-    function jsonp(url, params = {}) {
-      return new Promise((resolve, reject) => {
-        const callbackName = `bsc0801_cb_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const script = document.createElement("script");
-        const cleanup = () => {
-          delete window[callbackName];
-          script.remove();
-          window.clearTimeout(timer);
-        };
-        const timer = window.setTimeout(() => {
-          cleanup();
-          reject(new Error("Google Sheet request timed out"));
-        }, 15000);
-
-        window[callbackName] = data => {
-          cleanup();
-          resolve(data);
-        };
-
-        const query = new URLSearchParams({ ...params, callback: callbackName, cache: String(Date.now()) });
-        script.src = `${url}${url.includes("?") ? "&" : "?"}${query.toString()}`;
-        script.onerror = () => {
-          cleanup();
-          reject(new Error("Could not load Google Sheet data"));
-        };
-        document.head.appendChild(script);
-      });
-    }
-
-    async function loadRowsFromAppsScript() {
-      const data = await jsonp(APPS_SCRIPT_URL, { action: "list" });
-      if (!data || data.status !== "ok" || !Array.isArray(data.rows)) {
-        throw new Error(data && data.message ? data.message : "Apps Script returned no rows");
-      }
-      return data.rows.map(normalizeRow);
-    }
-
-    function postRowToAppsScript(row) {
-      return new Promise((resolve, reject) => {
-        const iframeName = `bsc0801_post_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const iframe = document.createElement("iframe");
-        iframe.name = iframeName;
-        iframe.style.display = "none";
-
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = APPS_SCRIPT_URL;
-        form.target = iframeName;
-        form.style.display = "none";
-
-        const payload = document.createElement("input");
-        payload.type = "hidden";
-        payload.name = "payload";
-        payload.value = JSON.stringify(normalizeRow(row));
-        form.appendChild(payload);
-
-        let submitted = false;
-        const cleanup = () => {
-          window.clearTimeout(timer);
-          iframe.remove();
-          form.remove();
-        };
-        const timer = window.setTimeout(() => {
-          cleanup();
-          reject(new Error("Adding to Google Sheet timed out"));
-        }, 15000);
-
-        iframe.addEventListener("load", () => {
-          if (!submitted) return;
-          cleanup();
-          resolve();
-        });
-
-        document.body.appendChild(iframe);
-        document.body.appendChild(form);
-        submitted = true;
-        form.submit();
-      });
-    }
-
-    function loadRowsFromCsvFallback() {
-      return new Promise((resolve, reject) => {
-        Papa.parse(CSV_PATH, {
-          download: true,
-          header: true,
-          skipEmptyLines: true,
-          delimitersToGuess: [",", "\t", ";", "|"],
-          transformHeader: h => h.replace(/\uFEFF/g, "").trim(),
-          complete: results => resolve(results.data.map(normalizeRow)),
-          error: reject
-        });
-      });
-    }
-
-    async function loadData(options = {}) {
-      const silent = options.silent === true;
-      const keepSelection = options.keepSelection !== false;
-      try {
-        if (hasAppsScript()) {
-          if (!silent) setLoaded(true, "Loading Google Sheet");
-          const rows = await loadRowsFromAppsScript();
-          LOCAL_ROWS = [];
-          rebuildFromRows(rows, { keepSelection });
-          setLoaded(true, `Google Sheet live, ${rows.length} records`);
-          startRemoteRefresh();
-          return;
-        }
-
-        if (!silent) setLoaded(true, "Loading CSV fallback");
-        LOCAL_ROWS = loadLocalRows();
-        const rows = await loadRowsFromCsvFallback();
-        rebuildFromRows([...rows, ...LOCAL_ROWS], { keepSelection });
-        setLoaded(true, LOCAL_ROWS.length ? `CSV fallback + ${LOCAL_ROWS.length} browser-added` : "CSV fallback loaded");
-      } catch (err) {
-        setLoaded(false, hasAppsScript() ? "Google Sheet failed" : "CSV failed to load");
-        renderEmpty("Failed to load data", String(err));
-        console.error(err);
-      }
-    }
-
-    function startRemoteRefresh() {
-      if (REMOTE_REFRESH_TIMER || !hasAppsScript()) return;
-      REMOTE_REFRESH_TIMER = window.setInterval(() => {
-        const addPanelOpen = !els.addPanel.hidden;
-        const hasDraft = !!DRAFT_ROW;
-        if (!addPanelOpen && !hasDraft) loadData({ silent: true, keepSelection: true });
-      }, REMOTE_REFRESH_MS);
-    }
-
-    function updateStats() {
-      const storage = new Set();
-      let danger = 0;
-      RAW.forEach(r => {
-        const st = pluck(r, "Storage");
-        if (st) storage.add(st);
-        if (/danger/i.test(pluck(r, "GHS: Signal Word"))) danger += 1;
-      });
-      els.statChemicals.textContent = String(GROUPS.length);
-      if (els.statVariants) els.statVariants.textContent = String(RAW.length);
-      els.statStorage.textContent = String(storage.size);
-      if (els.statDanger) els.statDanger.textContent = String(danger);
-    }
-
-    function openAddPanel() {
-      els.addPanel.hidden = false;
-      const firstInput = els.addForm.querySelector("[data-col='Name']");
-      if (firstInput) firstInput.focus();
-      els.addPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function closeAddPanel() {
-      els.addPanel.hidden = true;
-    }
-
-    function resetAll() {
-      QUERY = "";
-      selectedKey = "";
-      els.q.value = "";
-      els.categoryFilter.value = "";
-      els.storageFilter.value = "";
-      els.ownerFilter.value = "";
-      render();
-    }
-
-    function copyText(text) {
-      if (!text) return;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(() => showToast("Copied CAS"));
-      } else {
-        const area = document.createElement("textarea");
-        area.value = text;
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand("copy");
-        area.remove();
-        showToast("Copied CAS");
-      }
-    }
-
-    function showToast(message) {
-      els.toast.textContent = message;
-      els.toast.classList.add("show");
-      window.clearTimeout(showToast.timer);
-      showToast.timer = window.setTimeout(() => els.toast.classList.remove("show"), 1600);
-    }
-
-    function setLoaded(ok, message) {
-      els.statusText.textContent = message;
-      if (els.statusDot) {
-        els.statusDot.style.background = ok ? "var(--success)" : "var(--danger)";
-        els.statusDot.style.boxShadow = "none";
-      }
-    }
-
-    [els.categoryFilter, els.storageFilter, els.ownerFilter].forEach(el => el.addEventListener("change", render));
-    els.q.addEventListener("input", e => { QUERY = e.target.value || ""; render(); });
-    els.clearSearch.addEventListener("click", () => { QUERY = ""; els.q.value = ""; render(); els.q.focus(); });
-    els.resetFilters.addEventListener("click", resetAll);
-    els.resetAllTop.addEventListener("click", resetAll);
-    els.exportCsvTop.addEventListener("click", exportCsv);
-    els.openAddPanel.addEventListener("click", openAddPanel);
-    els.closeAddPanel.addEventListener("click", closeAddPanel);
-    els.exportCsvForm.addEventListener("click", exportCsv);
-    els.clearAddForm.addEventListener("click", clearAddForm);
-    els.clearLocalRows.addEventListener("click", clearBrowserAddedRows);
-    els.addForm.addEventListener("input", updateDraftFromForm);
-    els.addForm.addEventListener("submit", e => { e.preventDefault(); addChemicalFromForm(); });
-
-    loadData({ keepSelection: false });
-  </script>
-</body>
-</html>
+    });
+</script>
+</body></html>
